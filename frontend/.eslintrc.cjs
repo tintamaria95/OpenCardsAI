@@ -17,6 +17,27 @@ module.exports = {
     ],
     'react/react-in-jsx-scope': 'off',
     'react/jsx-uses-react': 'off',
+    "@typescript-eslint/naming-convention":[
+      "error",
+      {
+        "format": ["camelCase", "PascalCase"],
+        "leadingUnderscore": "allow",
+        "selector": "variable",
+        "trailingUnderscore": "allow"
+      },
+      {
+        "format": ["camelCase", "PascalCase"],
+        "leadingUnderscore": "allow",
+        "selector": "function",
+        "trailingUnderscore": "allow"
+      },
+      {
+        "format": ["PascalCase"],
+        "leadingUnderscore": "allow",
+        "selector": "typeLike",
+        "trailingUnderscore": "allow"
+      }
+   ]
   },
   parserOptions: {
     ecmaVersion: 'latest',

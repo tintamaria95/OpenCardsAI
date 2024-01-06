@@ -1,21 +1,24 @@
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
+import { Route, Routes } from 'react-router-dom'
 import './App.css'
+
+import Home from '../pages/Home/Home'
+import PublicLobby from '../pages/PublicLobby/PublicLobby'
+import PrivateLobby from '../pages/PrivateLobby/PrivateLobby'
 
 function App() {
   // const [count, setCount] = useState(0)
 
-  return <>
-    <h1>CARDGAMES</h1>
-    <div id='subtitle'>Jouez à vos jeux de cartes préférés</div>
-    <h3>Personnalise ton joueur</h3>
-    <div id='avatar'>Image avatar</div>
-    <div id='pseudo'>Pseudo joueur</div>
-    <div>Lobbys publics</div>
-    <div>Lobby privé</div>
-    <div>Apprenez à jouer...</div>
-  </>
+  return (
+    <>
+      <Routes>
+        <Route path="/">
+          <Route index element={<Home />} />
+          <Route path="publiclobby" element={<PublicLobby />} />
+          <Route path="privatelobby" element={<PrivateLobby />} />
+        </Route>
+      </Routes>
+    </>
+  )
 }
 
 export default App
