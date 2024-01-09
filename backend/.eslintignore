@@ -1,0 +1,6 @@
+built/
+node_modules/
+.eslintrc.cjs
+.gitignore
+.prettierrc
+*.json

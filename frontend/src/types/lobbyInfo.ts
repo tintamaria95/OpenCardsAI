@@ -1,7 +1,7 @@
-type LobbyType = {
+type LobbyInfo = {
   lobbyName: string,
   numberOfPlayers: number,
   lobbyStatus: string
 }
 
-export default LobbyType
+export default LobbyInfo

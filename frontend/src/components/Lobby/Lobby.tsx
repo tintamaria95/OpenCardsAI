@@ -1,16 +1,13 @@
-import LobbyType from "../../types/lobbyType"
+import LobbyInfo from "../../types/lobbyInfo"
 
-type LobbyProps = {
-    lobby: LobbyType
-}
-const Lobby: React.FC<LobbyProps> = ({ lobby }) => {
+const Lobby = ({ lobbyName, numberOfPlayers, lobbyStatus }: LobbyInfo) => {
 
-    return <div>
-        <div id='lobbyname'>{lobby.lobbyName}</div>
-        <div>{lobby.numberOfPlayers}</div>
-        <div>{lobby.lobbyStatus}</div>
+    return <li>
+        <div id='lobbyname'>{lobbyName}</div>
+        <div>{numberOfPlayers}</div>
+        <div>{lobbyStatus}</div>
         <div>Rejoindre</div>
-    </div>
+    </li>
 }
 
 export default Lobby
