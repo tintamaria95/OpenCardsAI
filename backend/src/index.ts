@@ -1,20 +1,41 @@
 import express, { Request, Response } from 'express'
 import { createServer } from 'http'
-import { Server } from 'socket.io'
+import * as socketio from 'socket.io'
+import * as path from 'path'
 
 const PORT = 3000
+
 const app = express()
+
 const httpServer = createServer(app)
-const io = new Server(httpServer, {
-  /* options */
+const io = new socketio.Server(httpServer, {
+  cors: {
+    origin: 'http://localhost:5173'
+  }
+})
+
+app.use(express.static('public'))
+
+app.get('/', (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '../index.html'))
 })
 
 io.on('connection', (socket) => {
-  console.log(socket.id)
-})
+  console.log(`New user connected: ${socket.id}`)
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, TypeScript with Express!')
+  socket.on('increment', () => {
+    console.log('increment')
+    io.emit('increment')
+  })
+
+  socket.on('decrement', () => {
+    console.log('decrement')
+    io.emit('decrement')
+  })
+
+  socket.on('disconnect', () => {
+    console.log(`User disconnected: ${socket.id}`)
+  })
 })
 
 httpServer.listen(PORT, () => {

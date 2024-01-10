@@ -1,23 +1,48 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import io from 'socket.io-client';
+
+const socket = io('localhost:3000')
 
 const Counter = () => {
-    const [count, setCount] = useState(0)
-  // Function to increment the count
+  const [count, setCount] = useState(0)
+
+  const handleClickIncr = () => {
+    socket.emit('increment')
+  }
+
+  const handleClickDecr = () => {
+    socket.emit('decrement')
+  }
+  
   const increment = () => {
-    setCount(count + 1); // Updating the 'count' state
+    setCount((prevCount) => prevCount + 1)
   };
 
-  // Function to decrement the count
   const decrement = () => {
-    setCount(count - 1); // Updating the 'count' state
+    setCount((prevCount) => prevCount - 1)
   };
+
+  useEffect(() => {
+    socket.on('increment', () => {
+      increment()
+    });
+
+    socket.on('decrement', () => {
+      decrement()
+    });
+
+    return () => {
+      socket.off('increment');
+      socket.off('decrement');
+    };
+  }, []);
 
   return (
     <div>
       <h2>Counter</h2>
       <p>Count: {count}</p>
-      <button onClick={increment}>Increment</button>
-      <button onClick={decrement}>Decrement</button>
+      <button onClick={handleClickIncr}>Increment</button>
+      <button onClick={handleClickDecr}>Decrement</button>
     </div>
   );
 }
