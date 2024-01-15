@@ -8,14 +8,16 @@ const logger = winston.createLogger({
   format: winston.format.json(),
   transports: [
     new winston.transports.File({ filename: 'warn.log', level: 'warn' })
-  ],
-});
+  ]
+})
 
 if (process.env.NODE_ENV !== 'PROD') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple(),
-    level: 'info'
-  }));
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.simple(),
+      level: 'info'
+    })
+  )
 }
 
 export default logger

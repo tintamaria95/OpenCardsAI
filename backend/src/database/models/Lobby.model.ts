@@ -1,4 +1,4 @@
-import { Table, Column, Model } from 'sequelize-typescript';
+import { Table, Column, Model } from 'sequelize-typescript'
 
 type LobbyColumns = {
     lobbyName: string
@@ -10,16 +10,16 @@ type LobbyColumns = {
 @Table({ timestamps: true })
 class LobbyModel extends Model implements LobbyColumns {
     @Column({ allowNull: false })
-    declare lobbyName: string;
+    declare lobbyName: string
+
+    @Column({ allowNull: false })
+    declare isPublic: boolean
 
     @Column
-    declare isPublic: boolean;
+    declare numberOfPlayersInLobby: number
 
-    @Column
-    declare numberOfPlayersInLobby: number;
-
-    @Column
-    declare status: string;
+    @Column({ allowNull: false })
+    declare status: string
 }
 
 async function createLobbyInstance(columns: LobbyColumns) {
@@ -27,4 +27,13 @@ async function createLobbyInstance(columns: LobbyColumns) {
     return lobby
 }
 
-export { LobbyModel, createLobbyInstance }
+async function getPublicLobbies() {
+    // await createLobbyInstance({ lobbyName: "test", isPublic: true, numberOfPlayersInLobby: 2, status: "OK" })
+    const lobbies = await LobbyModel.findAll({
+        where: { isPublic: true }
+        // attributes: Object.keys(LobbyModel.getAttributes)
+    })
+    return lobbies
+}
+
+export { LobbyModel, createLobbyInstance, getPublicLobbies }

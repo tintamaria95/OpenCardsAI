@@ -4,7 +4,7 @@
   "description": "",
   "main": "./build/index.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node ./src/database/main.ts",
+    "dev": "nodemon --exec ts-node ./src/index.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --config .prettierrc --write 'src/**/*.{ts,tsx}'",
     "build": "tsc",
