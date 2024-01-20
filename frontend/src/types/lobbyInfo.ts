@@ -1,7 +1,7 @@
 type LobbyInfo = {
-  lobbyName: string,
+  name: string,
   numberOfPlayers: number,
-  lobbyStatus: string
+  status: string
 }
 
 export default LobbyInfo

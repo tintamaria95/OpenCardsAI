@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import Counter from '../../components/Counter/Counter'
+// import Counter from '../../components/Counter/Counter'
 
 function Home() {
   return (
@@ -19,9 +19,10 @@ function Home() {
       </div>
       <div>Vous avez un code d'invitation ?</div>
       <div>Apprenez à jouer...</div>
-      <Counter/>
+      {/* <Counter/> */}
     </>
   )
 }
 
 export default Home
+

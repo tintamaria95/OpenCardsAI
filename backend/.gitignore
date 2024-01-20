@@ -1,9 +1,11 @@
 node_modules
 dist
 build
+.env
 
-# sqlite database files
-sqlite-files/*
+# prisma files
+prisma/*
+!prisma/schema.prisma
 
 # Editor directories and files
 .vscode/*

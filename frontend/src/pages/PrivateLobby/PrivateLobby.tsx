@@ -6,9 +6,16 @@ function PrivateLobby() {
   return (
     <>
       <h1>PrivateLobby</h1>
-      <div>As-tu un code d'invitation ? Rejoindre lobby privé</div>
-      <div>...</div>
-      <div>Créer un lobby privé</div>
+      <span>
+        <div>As-tu un code d'invitation ?</div>
+        <input type="text" placeholder={"Code d'invitation"} />
+        <button>Rejoindre lobby privé</button>
+      </span>
+      <div></div>
+      <span>
+        <input type="text" placeholder={"NomDeLobbyOriginalRandom"} />
+        <button>Créer un lobby privé</button>
+      </span>
       <div>
         <Link to={'/'}>retour</Link>
       </div>
