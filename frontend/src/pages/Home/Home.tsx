@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 // import Counter from '../../components/Counter/Counter'
 
 function Home() {
+  
   return (
     <>
       <h1>CARDGAMES</h1>

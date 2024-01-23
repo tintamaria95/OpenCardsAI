@@ -4,9 +4,9 @@ import bodyParser from 'body-parser'
 import * as socketio from 'socket.io'
 import * as path from 'path'
 import logger from './logger'
-import { LobbyInfo } from './type/LobbyInfo'
-import { handlePublicLobbiesGET, handlePublicLobbiesPOST } from './pages/publiclobby'
-import { handleIOConnection } from './pages/io'
+import { LobbyInfosType } from './type/LobbyInfo'
+import { handlePublicLobbiesGET, handleCreateLobby } from './pages/publicLobby'
+import { handleIo } from './pages/io'
 import * as cors from 'cors'
 
 const PORT = 3000
@@ -34,11 +34,7 @@ app.get('/', (req: Request, res: Response) => {
 })
 
 // Lobby list in RAM
-const lobbiesList: LobbyInfo[] = [{
-  name:"test",
-  numberOfPlayers: 2,
-  status: "OK"
-}]
+const lobbiesList: LobbyInfosType[] = []
 
 // Request to browse game lobbies. Send JSON list of available public lobbies
 app.get('/publiclobby', (req: Request, res: Response) => {
@@ -48,12 +44,12 @@ app.get('/publiclobby', (req: Request, res: Response) => {
 })
 
 // Request to create a new lobby. Send an acknowlegement for new lobby creation and infos to join websocket room.
-app.post('/publiclobby', (req: Request, res: Response) => {
-  handlePublicLobbiesPOST(req, res, lobbiesList)
+app.post('/createlobby', (req: Request, res: Response) => {
+  handleCreateLobby(req, res, lobbiesList)
 })
 
 // io connection example
-handleIOConnection(io)
+handleIo(io, lobbiesList)
 
 httpServer.listen(PORT, () => {
   logger.info(`Back-end running: Listening on http://localhost:${PORT}`)

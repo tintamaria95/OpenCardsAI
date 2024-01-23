@@ -1,7 +1,10 @@
-type LobbyInfo = {
-    name: string,
-    numberOfPlayers: number,
-    status: string
-  }
+type LobbyInfosType = {
+  id: string | undefined,
+  name?: string
+  players?:{
+    id: string | undefined
+    name: string
+  }[]
+}
 
-export { LobbyInfo }
+export { LobbyInfosType }

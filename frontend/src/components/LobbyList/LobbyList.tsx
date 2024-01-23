@@ -1,23 +1,25 @@
 import { useState, useEffect } from 'react'
-import { backEndUrl } from '../../main'
+import { backEndUrl } from '../../App/App'
+import LobbyToJoin from '../LobbyToJoin/LobbyToJoin'
+import LobbyToCreate from '../LobbyToCreate/LobbyToCreate'
 
 
 export default function LobbyList() {
-    const [lobbiesList, setLobbiesList] = useState([{ name: 'name', numberOfPlayers: 111, status: 'status' }])
+    const [lobbiesList, setLobbiesList] = useState([{socketId: '', name: '0', numberOfPlayers: 0, status: '0' }])
     const [isLoading, setIsLoading] = useState(true)
     const [fetchError, setFetchError] = useState("")
 
     useEffect(() => {
-        refresh()
+        refreshLobbies()
     }, [])
 
-    async function refresh() {
+    // --- REFRESH WITHOUT WEBSOCKET MIGHT RESULT IN MORE INCOHERENCE (CHANGES TO MAKE LATER)
+    async function refreshLobbies() {
         setIsLoading(true)
         fetch(backEndUrl + '/publiclobby')
             .then(res => res.json())
             .then((res) => {
                 setLobbiesList(res)
-                console.log(lobbiesList)
                 setIsLoading(false)
             },
                 (error) => {
@@ -34,14 +36,14 @@ export default function LobbyList() {
                     <div>LOADING...</div>
                 ) : (
                     <>
-                        <button onClick={refresh}>Refresh</button>
+                        <button onClick={refreshLobbies}>Refresh Lobby list</button>
+                        <div></div>
+                        <LobbyToCreate/>
+                        <div>--- Existing lobbies ---</div>
                         <ul>
                             {lobbiesList.map((lobby, index) => (
                                 <li key={index}>
-                                    <div id='lobbyname'>{lobby.name}</div>
-                                    <div>{lobby.numberOfPlayers}</div>
-                                    <div>{lobby.status}</div>
-                                    <button>Rejoindre</button>
+                                    <LobbyToJoin socketId={lobby.socketId} name={lobby.name} numberOfPlayers={lobby.numberOfPlayers} status={lobby.status}/>
                                 </li>
                             ))}
                         </ul>

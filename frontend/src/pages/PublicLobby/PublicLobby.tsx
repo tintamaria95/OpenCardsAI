@@ -2,7 +2,7 @@ import LobbyList from "../../components/LobbyList/LobbyList"
 import { Link } from "react-router-dom"
 
 
-const PublicLobby = () => {
+export default function PublicLobby ()  {
  return (
       <>
         <h1>PublicLobby</h1>
@@ -11,4 +11,4 @@ const PublicLobby = () => {
       </>)
 }
 
-export default PublicLobby
+
