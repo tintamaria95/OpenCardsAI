@@ -13,13 +13,8 @@ export function userLobby(lobbyList: LobbyInfosType[], playerId: PlayerType['id'
     }
 }
 
-export function addNewLobbyToList(lobbyList: LobbyInfosType[], lobbyInfos: LobbyInfosType, id?: LobbyInfosType['id']) {
-    if (id) {
-        lobbyInfos.id = id
-    }
-    else {
-        lobbyInfos.id = randomUUID()
-    }
+export function addNewLobbyToList(lobbyList: LobbyInfosType[], lobbyInfos: LobbyInfosType) {
+    lobbyInfos.id = randomUUID()
     lobbyInfos.createdAt = Date.now()
     lobbyList.push(lobbyInfos)
 }

@@ -41,10 +41,15 @@ let privateLobbyList: LobbyInfosType[] = []
 io.on('connection', (socket) => {
   logger.info(`New user connected: ${socket.id}`)
 
-  socket.join(ROOMPUBLICLOBBY)
+  
 
   socket.on('join-publiclobby', () => {
     emitSetLobbyList(io, publicLobbyList)
+    socket.join(ROOMPUBLICLOBBY)
+  })
+
+  socket.on('left-publiclobby', () => {
+    socket.leave(ROOMPUBLICLOBBY)
   })
 
   socket.on('req-create-lobby', (lobbyInfos: LobbyInfosType) => {
@@ -56,9 +61,11 @@ io.on('connection', (socket) => {
 
       emitAckLobbyCreated(io, lobbyInfos)
       emitCreateLobby(io, lobbyInfos)
-      
+
     } else {
       addNewLobbyToList(privateLobbyList, lobbyInfos)
+      socket.join(lobbyInfos.id)
+      emitAckLobbyCreated(io, lobbyInfos)
     }
   })
 
@@ -70,7 +77,7 @@ io.on('connection', (socket) => {
       socket.leave(ROOMPUBLICLOBBY)
       socket.join(lobbyId)
 
-      socket.broadcast.to(lobbyId).emit('update-currentlobby', updatedLobby)
+      io.to(lobbyId).emit('update-currentlobby', updatedLobby)
       emitSetLobbyList(io, publicLobbyList)
     }
   })
