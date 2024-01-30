@@ -1,6 +1,33 @@
 import { Link } from 'react-router-dom'
+import LobbyToCreate from '../../components/LobbyToCreate/LobbyToCreate'
+import { useEffect } from 'react'
+import { useCurrentLobbyContext } from '../../components/CurrentLobbyContext'
+import { useNavigate } from 'react-router-dom'
+import { LobbyInfosType } from '../../types'
+import { socket } from '../../App/App'
 
 function PrivateLobby() {
+
+  const { setCurrentLobbyInfos } = useCurrentLobbyContext()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+
+    if (!socket.connected) {
+      socket.connect()
+  }
+
+    function navToCurrentLobby(lobbyInfos: LobbyInfosType) {
+      setCurrentLobbyInfos(lobbyInfos)
+      navigate('/play')
+    }
+
+    socket.on('ack-lobby-created', navToCurrentLobby)
+
+    return () => {
+      socket.off('ack-lobby-created', navToCurrentLobby)
+    }
+  })
 
   return (
     <>
@@ -12,8 +39,7 @@ function PrivateLobby() {
       </span>
       <div></div>
       <span>
-        <input type="text" placeholder={"NomDeLobbyOriginalRandom"} />
-        <button>Créer un lobby privé</button>
+        <LobbyToCreate isPublic={false}/>
       </span>
       <div>
         <Link to={'/'}>retour</Link>

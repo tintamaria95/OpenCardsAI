@@ -22,7 +22,7 @@ export default function LobbyToCreate({isPublic}: LobbyToCreatePropType) {
                 id: 'temp',
                 name: lobbyName,
                 isPublic: isPublic,
-                players: [{id: socket.id, name: socket.id}]
+                players: []
             }
             emitCreateLobby(
                 socket, newLobbyInfos

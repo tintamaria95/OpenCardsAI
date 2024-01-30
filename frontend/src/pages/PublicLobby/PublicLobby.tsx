@@ -8,6 +8,10 @@ export default function PublicLobby() {
 
   useEffect(() => {
     socket.emit('join-publiclobby')
+
+    return () => {
+      socket.emit('left-publiclobby')
+    }
   }, [])
 
   return (

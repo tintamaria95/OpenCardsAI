@@ -10,20 +10,20 @@ export default function CurrentLobby() {
 
     useEffect(() => {
 
-        function emitPlayerJoinLobby(socket: Socket, lobbyId: string | undefined, player: PlayerType) {
-            socket.emit('join-currentlobby', lobbyId, player)
+        function emitPlayerJoinLobby(socket: Socket, lobbyId: string | undefined, player: PlayerType, isPublic: boolean | undefined) {
+            socket.emit('join-currentlobby', lobbyId, player, isPublic)
         }
-        function emitPlayerLeftLobby(socket: Socket, lobbyId: string | undefined, playerId: PlayerType['id']) {
-            socket.emit('left-currentlobby', lobbyId, playerId)
+        function emitPlayerLeftLobby(socket: Socket, lobbyId: string | undefined, playerId: PlayerType['id'], isPublic: boolean | undefined) {
+            socket.emit('left-currentlobby', lobbyId, playerId, isPublic)
         }
 
         if (socket.id !== undefined){
-            emitPlayerJoinLobby(socket, currentLobbyInfos?.id, {id: socket.id, name: socket.id})
+            emitPlayerJoinLobby(socket, currentLobbyInfos?.id, {id: socket.id, name: socket.id}, currentLobbyInfos?.isPublic)
         }
         
         return () => {
             if (socket.id !== undefined){
-                emitPlayerLeftLobby(socket, currentLobbyInfos?.id, socket.id)
+                emitPlayerLeftLobby(socket, currentLobbyInfos?.id, socket.id, currentLobbyInfos?.isPublic)
             }
         }
     }, [])

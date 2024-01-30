@@ -52,7 +52,7 @@ export default function LobbyList() {
                 <div>--- Existing lobbies ---</div>
                 {lobbyList.map((lobby, index) => (
                     <li key={index}>
-                        <LobbyToJoin id={lobby.id} name={lobby.name} players={lobby.players}/>
+                        <LobbyToJoin id={lobby.id} name={lobby.name} players={lobby.players} isPublic={lobby.isPublic}/>
                     </li>
                 ))}
             </>)}
