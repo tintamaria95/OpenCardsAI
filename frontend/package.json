@@ -11,13 +11,13 @@
     "format": "prettier --config .prettierrc --write 'src/**/*.{ts,tsx}'"
   },
   "dependencies": {
-    "install": "^0.13.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.1",
     "socket.io-client": "^4.7.3"
   },
   "devDependencies": {
+    "@types/node": "^20.11.10",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@typescript-eslint/eslint-plugin": "^6.14.0",

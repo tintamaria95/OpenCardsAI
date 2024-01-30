@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 
 function PrivateLobby() {
-  // const [count, setCount] = useState(0)
 
   return (
     <>

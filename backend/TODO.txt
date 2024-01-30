@@ -1,0 +1,8 @@
+BACK
+- handle user left or disconnect -> update lobbylist and currentlobby - OK
+- remove lobby from list if player created another lobby and lobby is still empty or cron job cleaned it
+- handle persitent lobby
+- Fusionner public et private lists mais target updates only sur public (pas de notif users pour creation private except host private)
+
+FRONT
+- random name for lobby -> called fom back

@@ -1,33 +1,26 @@
-import LobbyInfo from "../../types/lobbyInfo";
-import { useState } from "react";
-import { backEndUrl } from "../../App/App";
+import {LobbyInfosType } from "../../types";
+import { useNavigate } from "react-router-dom";
+import { useCurrentLobbyContext } from "../CurrentLobbyContext";
+import { socket } from "../../App/App";
 
-export default function LobbyToJoin({socketId, name, numberOfPlayers, status}: LobbyInfo) {
-    const [isJoining, setIsJoining] = useState(false)
+export default function LobbyToJoin({id, name, players}: LobbyInfosType) {
+    const navigate = useNavigate()
+    const { setCurrentLobbyInfos } = useCurrentLobbyContext()
 
-    async function joinLobby(){
-        // setIsJoining(true)
-        // const requestOptions = {
-        //     method: 'POST',
-        //     headers: {'Content-Type': 'application/json'},
-        //     body: JSON.stringify({'leadSocketId': 1234})
-        // }
-        // fetch(backEndUrl + '/publiclobby', requestOptions)
-        // .then(res => res.json())
-        // setIsJoining(false)
+    function navigateToCurrentLobby() {
+        if (socket.id !== undefined) {
+            const newPlayersList = [...players, { id: socket.id, name: socket.id }]
+            setCurrentLobbyInfos({ id: id, name: name, players: newPlayersList})
+            navigate('/play')
+        }
     }
+
 
     return (
         <>
-            <div id='lobbyname'>{name}</div>
-            <div>{numberOfPlayers}</div>
-            <div>{status}</div>
-            {(isJoining)? (
-                <div>Joining...</div>
-            ): (
-                <button onClick={joinLobby}>Rejoindre</button>
-            )}
-            
+            <div>Lobby name: {name}</div>
+            <div>nb of players: {players?.length}</div>
+            <button onClick={navigateToCurrentLobby}>Rejoindre</button>
         </>
     )
 }

@@ -4,12 +4,12 @@ import bodyParser from 'body-parser'
 import * as socketio from 'socket.io'
 import * as path from 'path'
 import logger from './logger'
-import { LobbyInfosType } from './type/LobbyInfo'
-import { handlePublicLobbiesGET, handleCreateLobby } from './pages/publicLobby'
-import { handleIo } from './pages/io'
+import { LobbyInfosType, PlayerType } from './types'
+import { addUserToLobby, removeUserFromLobby, addNewLobbyToList, ROOMPUBLICLOBBY, removeLobbyFromList, userLobby, handleUserLeftLobby, emitCreateLobby, emitSetLobbyList, emitAckLobbyCreated } from './handleLobbyChanges'
 import * as cors from 'cors'
 
 const PORT = 3000
+
 const app = express()
 
 const httpServer = createServer(app)
@@ -34,22 +34,66 @@ app.get('/', (req: Request, res: Response) => {
 })
 
 // Lobby list in RAM
-const lobbiesList: LobbyInfosType[] = []
+let publicLobbyList: LobbyInfosType[] = []
+let privateLobbyList: LobbyInfosType[] = []
 
-// Request to browse game lobbies. Send JSON list of available public lobbies
-app.get('/publiclobby', (req: Request, res: Response) => {
-  handlePublicLobbiesGET(res, lobbiesList).catch(() => {
-    logger.error('Error while loading public lobbies')
+
+io.on('connection', (socket) => {
+  logger.info(`New user connected: ${socket.id}`)
+
+  socket.join(ROOMPUBLICLOBBY)
+
+  socket.on('join-publiclobby', () => {
+    emitSetLobbyList(io, publicLobbyList)
+  })
+
+  socket.on('req-create-lobby', (lobbyInfos: LobbyInfosType) => {
+    if (lobbyInfos.isPublic) {
+      addNewLobbyToList(publicLobbyList, lobbyInfos)
+
+      socket.leave(ROOMPUBLICLOBBY)
+      socket.join(lobbyInfos.id)
+
+      emitAckLobbyCreated(io, lobbyInfos)
+      emitCreateLobby(io, lobbyInfos)
+      
+    } else {
+      addNewLobbyToList(privateLobbyList, lobbyInfos)
+    }
+  })
+
+  socket.on('join-currentlobby', (lobbyId: LobbyInfosType['id'], playerInfos: PlayerType) => {
+    const updatedLobby = addUserToLobby(publicLobbyList, lobbyId, playerInfos)
+    if (updatedLobby == undefined) {
+      // emits error
+    } else {
+      socket.leave(ROOMPUBLICLOBBY)
+      socket.join(lobbyId)
+
+      socket.broadcast.to(lobbyId).emit('update-currentlobby', updatedLobby)
+      emitSetLobbyList(io, publicLobbyList)
+    }
+  })
+
+  socket.on('left-currentlobby', (lobbyId: LobbyInfosType['id'], playerId: PlayerType['id']) => {
+    handleUserLeftLobby(io, socket, publicLobbyList, lobbyId, playerId)
+
+    socket.leave(lobbyId)
+    socket.join(ROOMPUBLICLOBBY)
+  }
+  )
+
+
+  socket.on('disconnect', () => {
+    logger.info(`User disconnected: ${socket.id}`)
+    const lobbyId = userLobby(publicLobbyList, socket.id)
+    if (lobbyId !== undefined) {
+      handleUserLeftLobby(io, socket, publicLobbyList, lobbyId, socket.id)
+    }
   })
 })
 
-// Request to create a new lobby. Send an acknowlegement for new lobby creation and infos to join websocket room.
-app.post('/createlobby', (req: Request, res: Response) => {
-  handleCreateLobby(req, res, lobbiesList)
-})
 
-// io connection example
-handleIo(io, lobbiesList)
 
 httpServer.listen(PORT, () => {
   logger.info(`Back-end running: Listening on http://localhost:${PORT}`)

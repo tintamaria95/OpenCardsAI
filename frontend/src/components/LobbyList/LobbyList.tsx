@@ -1,54 +1,62 @@
 import { useState, useEffect } from 'react'
-import { backEndUrl } from '../../App/App'
+import { useNavigate } from 'react-router-dom'
 import LobbyToJoin from '../LobbyToJoin/LobbyToJoin'
+import { socket } from '../../App/App'
+import { LobbyInfosType } from '../../types'
 import LobbyToCreate from '../LobbyToCreate/LobbyToCreate'
+import { useCurrentLobbyContext } from '../CurrentLobbyContext'
 
 
 export default function LobbyList() {
-    const [lobbiesList, setLobbiesList] = useState([{socketId: '', name: '0', numberOfPlayers: 0, status: '0' }])
-    const [isLoading, setIsLoading] = useState(true)
-    const [fetchError, setFetchError] = useState("")
+    const navigate = useNavigate()
+    const [lobbyList, setLobbyList] = useState<LobbyInfosType[]>([])
+    const { setCurrentLobbyInfos } = useCurrentLobbyContext()
 
     useEffect(() => {
-        refreshLobbies()
+
+        if (!socket.connected) {
+            socket.connect()
+        }
+
+
+        function updateCreateLobby(lobbyInfos: LobbyInfosType){
+            setLobbyList((prev) => [...prev, lobbyInfos])
+        }
+
+        function updateSetLobbyList(lobbyList: LobbyInfosType[]){
+            setLobbyList(lobbyList)
+        }
+
+        function navToCurrentLobby(lobbyInfos: LobbyInfosType){
+            setCurrentLobbyInfos(lobbyInfos)
+            navigate('/play')
+        }
+
+        socket.on('res-set-lobbylist', updateSetLobbyList)
+        socket.on('res-create-lobby', updateCreateLobby)
+        socket.on('ack-lobby-created', navToCurrentLobby)
+
+        return () => {
+            socket.off('res-set-lobbylist', updateSetLobbyList)
+            socket.off('res-create-lobby', updateCreateLobby)
+            socket.off('ack-lobby-created', navToCurrentLobby)
+        }
     }, [])
 
-    // --- REFRESH WITHOUT WEBSOCKET MIGHT RESULT IN MORE INCOHERENCE (CHANGES TO MAKE LATER)
-    async function refreshLobbies() {
-        setIsLoading(true)
-        fetch(backEndUrl + '/publiclobby')
-            .then(res => res.json())
-            .then((res) => {
-                setLobbiesList(res)
-                setIsLoading(false)
-            },
-                (error) => {
-                    setIsLoading(false)
-                    setFetchError(error)
-                    console.log(error)
-                })
-    }
-
     return (
-        <>
-            {(isLoading) ?
-                (
-                    <div>LOADING...</div>
-                ) : (
-                    <>
-                        <button onClick={refreshLobbies}>Refresh Lobby list</button>
-                        <div></div>
-                        <LobbyToCreate/>
-                        <div>--- Existing lobbies ---</div>
-                        <ul>
-                            {lobbiesList.map((lobby, index) => (
-                                <li key={index}>
-                                    <LobbyToJoin socketId={lobby.socketId} name={lobby.name} numberOfPlayers={lobby.numberOfPlayers} status={lobby.status}/>
-                                </li>
-                            ))}
-                        </ul>
-                        {(fetchError !== "")? (<div>Error: {fetchError}</div>): (<></>)}
-                    </>)}
-        </>)
+        <ul> {(lobbyList === undefined) ?
+            (
+                <div>LOADING...</div>
+            ) : (<>
+                <LobbyToCreate isPublic={true}/>
+                <div>--- Existing lobbies ---</div>
+                {lobbyList.map((lobby, index) => (
+                    <li key={index}>
+                        <LobbyToJoin id={lobby.id} name={lobby.name} players={lobby.players}/>
+                    </li>
+                ))}
+            </>)}
+
+        </ul>)
 }
 

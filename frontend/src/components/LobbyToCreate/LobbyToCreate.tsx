@@ -1,61 +1,42 @@
-import { Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { backEndUrl } from "../../App/App";
+import { useState } from "react";
 import { socket } from "../../App/App";
-import { lobbyInfos } from "../../App/App";
-import { LobbyInfosType } from "../../types/lobbyInfo";
+import { LobbyInfosType } from "../../types";
+import { Socket } from "socket.io-client";
 
-export default function LobbyToCreate() {
+type LobbyToCreatePropType = {
+    isPublic: boolean
+}
+
+export default function LobbyToCreate({isPublic}: LobbyToCreatePropType) {
     const [lobbyName, setLobbyName] = useState("reallyOriginalLobbyName")
-    const [isJoining, setIsJoining] = useState(false)
-    const [isRedirecting, setIsRedirecting] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)  
 
-    useEffect(() => { return () => { socket.off('connect', () => { POSTcreateLobby() }) } })
-
-    function POSTcreateLobby() {
-        const body: LobbyInfosType = {
-            id: socket.id,
-            name: lobbyName,
-            players: [{ id: socket.id, name: "Host" }]
-        }
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        }
-        fetch(backEndUrl + '/createlobby', requestOptions)
-            .then(res => res.json())
-            .then((res) => {
-                if (res['status'] === 'success') {
-                    lobbyInfos.id = body.id
-                    lobbyInfos.name = body.name
-                    lobbyInfos.players = body.players
-                    setIsRedirecting(true)
-                }
-            })
+    function emitCreateLobby(socket: Socket, lobbyInfos: LobbyInfosType){
+        socket.emit('req-create-lobby', lobbyInfos)
     }
 
-    async function handleCreateNewLobby() {
-        setIsJoining(true)
-        socket.on('connect', () => { POSTcreateLobby() }) // problems because only trigger function for first connection
-        socket.connect()
-        await new Promise(r => setTimeout(r, 3000))
-        setIsJoining(false)
+    function handleCreateNewLobby() {
+        if (socket.id !== undefined) {
+            setIsLoading(true)
+            const newLobbyInfos: LobbyInfosType = {
+                id: 'temp',
+                name: lobbyName,
+                isPublic: isPublic,
+                players: [{id: socket.id, name: socket.id}]
+            }
+            emitCreateLobby(
+                socket, newLobbyInfos
+            )
+        }
     }
 
-    if (isRedirecting) { return <Navigate to='/inlobby' /> }
-    return (
+    
+    return ((isLoading) ? (
+        <div>LOADING...</div>) : (
         <>
+            <input placeholder={"reallyOriginalLobbyName"} onChange={e => setLobbyName(e.target.value)} />
+            <button onClick={handleCreateNewLobby}>Create new lobby</button>
+        </>)
 
-            {(isJoining) ? (
-                <div>Joining...</div>
-            ) : (
-                <>
-                    <input placeholder={"reallyOriginalLobbyName"} onChange={e => setLobbyName(e.target.value)} />
-                    <button onClick={handleCreateNewLobby}>Create new lobby</button>
-                </>
-            )}
-
-        </>
     )
 }
