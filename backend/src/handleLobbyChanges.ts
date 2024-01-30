@@ -6,6 +6,22 @@ import { randomUUID } from "crypto";
 
 export const ROOMPUBLICLOBBY = 'publiclobby'
 
+
+export function handleUserJoinsLobby(io: Server, socket: Socket, lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerInfos: PlayerType){
+    const updatedLobby = addUserToLobby(lobbyList, lobbyId, playerInfos)
+    if (updatedLobby == undefined) {
+      // emits error
+    } else {
+      socket.leave(ROOMPUBLICLOBBY)
+      socket.join(lobbyId)
+
+      io.to(lobbyId).emit('update-currentlobby', updatedLobby)
+        if (updatedLobby.isPublic) {
+            emitSetLobbyList(io, lobbyList)
+        }
+    }
+}
+
 export function userLobby(lobbyList: LobbyInfosType[], playerId: PlayerType['id']){
     const lobby =  lobbyList.find(lobby => lobby.players.some(player => player.id === playerId))
     if (lobby !== undefined) {
@@ -58,5 +74,9 @@ export function removeUserFromLobby(lobbyList: LobbyInfosType[], lobbyId: LobbyI
 export function handleUserLeftLobby(io: Server, socket: Socket, lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerId: PlayerType['id']){
     const updatedLobby = removeUserFromLobby(lobbyList, lobbyId, playerId)
     socket.to(lobbyId).emit('update-currentlobby', updatedLobby)
-    emitSetLobbyList(io, lobbyList)    
+    if (updatedLobby !== undefined) {
+        if (updatedLobby.isPublic) {
+            emitSetLobbyList(io, lobbyList)
+        }
+}
 }

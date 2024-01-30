@@ -5,7 +5,7 @@ import * as socketio from 'socket.io'
 import * as path from 'path'
 import logger from './logger'
 import { LobbyInfosType, PlayerType } from './types'
-import { addUserToLobby, removeUserFromLobby, addNewLobbyToList, ROOMPUBLICLOBBY, removeLobbyFromList, userLobby, handleUserLeftLobby, emitCreateLobby, emitSetLobbyList, emitAckLobbyCreated } from './handleLobbyChanges'
+import { addUserToLobby, handleUserJoinsLobby, removeUserFromLobby, addNewLobbyToList, ROOMPUBLICLOBBY, removeLobbyFromList, userLobby, handleUserLeftLobby, emitCreateLobby, emitSetLobbyList, emitAckLobbyCreated } from './handleLobbyChanges'
 import * as cors from 'cors'
 
 const PORT = 3000
@@ -42,24 +42,24 @@ io.on('connection', (socket) => {
   logger.info(`New user connected: ${socket.id}`)
 
   
-
   socket.on('join-publiclobby', () => {
-    emitSetLobbyList(io, publicLobbyList)
     socket.join(ROOMPUBLICLOBBY)
+    emitSetLobbyList(io, publicLobbyList)
   })
+
 
   socket.on('left-publiclobby', () => {
     socket.leave(ROOMPUBLICLOBBY)
   })
 
+
   socket.on('req-create-lobby', (lobbyInfos: LobbyInfosType) => {
     if (lobbyInfos.isPublic) {
       addNewLobbyToList(publicLobbyList, lobbyInfos)
+      socket.join(lobbyInfos.id)
+      emitAckLobbyCreated(io, lobbyInfos)
 
       socket.leave(ROOMPUBLICLOBBY)
-      socket.join(lobbyInfos.id)
-
-      emitAckLobbyCreated(io, lobbyInfos)
       emitCreateLobby(io, lobbyInfos)
 
     } else {
@@ -69,21 +69,20 @@ io.on('connection', (socket) => {
     }
   })
 
-  socket.on('join-currentlobby', (lobbyId: LobbyInfosType['id'], playerInfos: PlayerType) => {
-    const updatedLobby = addUserToLobby(publicLobbyList, lobbyId, playerInfos)
-    if (updatedLobby == undefined) {
-      // emits error
-    } else {
-      socket.leave(ROOMPUBLICLOBBY)
-      socket.join(lobbyId)
 
-      io.to(lobbyId).emit('update-currentlobby', updatedLobby)
-      emitSetLobbyList(io, publicLobbyList)
+  socket.on('join-currentlobby', (lobbyId: LobbyInfosType['id'], playerInfos: PlayerType, isPublic: boolean) => {
+    if (isPublic) {
+      handleUserJoinsLobby(io, socket, publicLobbyList, lobbyId, playerInfos)
+    } else {
+      handleUserJoinsLobby(io, socket, privateLobbyList, lobbyId, playerInfos)
     }
   })
 
-  socket.on('left-currentlobby', (lobbyId: LobbyInfosType['id'], playerId: PlayerType['id']) => {
-    handleUserLeftLobby(io, socket, publicLobbyList, lobbyId, playerId)
+
+  socket.on('left-currentlobby', (lobbyId: LobbyInfosType['id'], playerId: PlayerType['id'], isPublic: boolean) => {
+    if (isPublic) { handleUserLeftLobby(io, socket, publicLobbyList, lobbyId, playerId) } else {
+      handleUserLeftLobby(io, socket, privateLobbyList, lobbyId, playerId)
+    }
 
     socket.leave(lobbyId)
     socket.join(ROOMPUBLICLOBBY)
@@ -93,7 +92,7 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     logger.info(`User disconnected: ${socket.id}`)
-    const lobbyId = userLobby(publicLobbyList, socket.id)
+    let lobbyId = userLobby(publicLobbyList, socket.id)
     if (lobbyId !== undefined) {
       handleUserLeftLobby(io, socket, publicLobbyList, lobbyId, socket.id)
     }
