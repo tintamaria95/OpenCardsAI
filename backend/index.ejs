@@ -22,15 +22,20 @@
     <meta name="theme-color" content="#ffffff">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
     <title>OpenGameCards-API</title>
-  </head>
-  <body>
-    <h1>Backend is running on localhost:3000</h1>
-    <div></div>
-    <h2>Note here next dev ideas:</h2>
-    <ul>
-        <li>Manage game rooms</li>
-</ul>
-  </body>
-</html>
+    </head>
+    <body>
+      <h1>Analytics</h1>
+      <div></div>
+      <section>
+        <h2>Lobbies</h2>
+        <h3>Public lobbies</h3>
+          <%- include('./lobbyTable.ejs', {lobbyList: public});%>
+        <h3>Private lobbies</h3>
+          <%- include('./lobbyTable.ejs', {lobbyList: private});%>
+      </section>
+    </body>
+    
+    </html>
 

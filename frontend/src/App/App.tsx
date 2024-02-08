@@ -9,6 +9,7 @@ import ProtectedRoute from '../components/ProtectedRoute'
 import { useEffect, useState } from 'react';
 import { LobbyInfosType } from '../types';
 import { CurrentLobbyContext } from '../components/CurrentLobbyContext';
+import { DisconnectionAlert } from '../components/DisconnectionAlert/DisconnectionAlert';
 
 export const backEndUrl = "http://localhost:3000"
 
@@ -21,7 +22,6 @@ function App() {
   const [currentLobbyInfos, setCurrentLobbyInfos] = useState<LobbyInfosType | undefined>(undefined)
 
   useEffect(()=>{
-
     function logEventsForDebug(event: any){
       console.log(`got ${event}`)
     }
@@ -34,6 +34,8 @@ function App() {
   }, [])
 
   return (
+    <>
+      <DisconnectionAlert/>
       <CurrentLobbyContext.Provider value={{ currentLobbyInfos: currentLobbyInfos, setCurrentLobbyInfos }}>
         <Routes>
           <Route path='/' element={<Home />} />
@@ -45,6 +47,8 @@ function App() {
           <Route path='*' element={<h1>Page not found... Breath and chill</h1>} />
         </Routes>
       </CurrentLobbyContext.Provider>
+    </>
+
   )
 }
 

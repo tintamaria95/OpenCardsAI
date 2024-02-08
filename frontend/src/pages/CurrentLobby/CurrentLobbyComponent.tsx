@@ -27,7 +27,7 @@ export default function CurrentLobbyComponent() {
             <h1>In Lobby</h1>
             {(currentLobbyInfos == undefined) ? (
                 <div>Error: currentLobbyInfos var is undefined.</div>
-            ) : (<> {(currentLobbyInfos.players !== undefined) ? (
+            ) : (<> {(currentLobbyInfos.players.length == 0) ? (
                 currentLobbyInfos.players.map((player, index) => (
                     <li key={index}>{player.name}</li>
                 ))

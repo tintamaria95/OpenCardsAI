@@ -29,13 +29,18 @@ app.use(express.static('public'))
 app.use(bodyParser.json())
 app.use(cors.default(corsOptions))
 
-app.get('/', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../index.html'))
-})
+// EJS
+app.set('view engine', 'ejs')
 
 // Lobby list in RAM
 let publicLobbyList: LobbyInfosType[] = []
 let privateLobbyList: LobbyInfosType[] = []
+
+app.get('/', (req: Request, res: Response) => {
+  res.render(path.join(__dirname, '../index.ejs'), {
+    public: publicLobbyList,
+    private: privateLobbyList})
+})
 
 
 io.on('connection', (socket) => {

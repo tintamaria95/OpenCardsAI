@@ -6,3 +6,6 @@ BACK
 
 FRONT
 - random name for lobby -> called fom back
+
+DEBUG parts:
+- urls to app to visualize different lobbies in RAM (pretty tabs)
