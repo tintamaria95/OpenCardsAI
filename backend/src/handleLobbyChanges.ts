@@ -7,15 +7,15 @@ import { randomUUID } from "crypto";
 export const ROOMPUBLICLOBBY = 'publiclobby'
 
 
-export function handleUserJoinsLobby(io: Server, socket: Socket, lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerInfos: PlayerType){
+export async function handleUserJoinsLobby(io: Server, socket: Socket, lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerInfos: PlayerType) {
     const updatedLobby = addUserToLobby(lobbyList, lobbyId, playerInfos)
     if (updatedLobby == undefined) {
-      // emits error
+        // TODO handle error lobby not found
     } else {
-      socket.leave(ROOMPUBLICLOBBY)
-      socket.join(lobbyId)
+        await socket.leave(ROOMPUBLICLOBBY)
+        await socket.join(lobbyId)
 
-      io.to(lobbyId).emit('update-currentlobby', updatedLobby)
+        io.to(lobbyId).emit('update-currentlobby', updatedLobby)
         if (updatedLobby.isPublic) {
             emitSetLobbyList(io, lobbyList)
         }

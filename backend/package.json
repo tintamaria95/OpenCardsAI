@@ -4,7 +4,6 @@
   "description": "",
   "main": "./build/index.js",
   "scripts": {
-    "create-db": "npx prisma migrate dev --name init",
     "dev": "nodemon --exec ts-node ./src/index.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --config .prettierrc --write 'src/**/*.{ts,tsx}'",
@@ -14,13 +13,11 @@
   "author": "martin le digabel",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.8.1",
     "@types/validator": "^13.11.8",
     "body-parser": "^1.20.2",
     "dotenv": "^16.3.1",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
-    "prisma": "^5.8.1",
     "reflect-metadata": "^0.2.1",
     "socket.io": "^4.7.3",
     "winston": "^3.11.0"
