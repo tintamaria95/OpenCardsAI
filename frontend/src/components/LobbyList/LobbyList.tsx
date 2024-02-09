@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LobbyToJoin from '../LobbyToJoin/LobbyToJoin'
-import { socket } from '../../App/App'
 import { LobbyInfosType } from '../../types'
 import LobbyToCreate from '../LobbyToCreate/LobbyToCreate'
 import { useCurrentLobbyContext } from '../CurrentLobbyContext'
+import { useSocketContext } from '../SocketContext'
 
 
 export default function LobbyList() {
+    const { socket } = useSocketContext()
+    
     const navigate = useNavigate()
     const [lobbyList, setLobbyList] = useState<LobbyInfosType[]>([])
     const { setCurrentLobbyInfos } = useCurrentLobbyContext()
 
     useEffect(() => {
-
         if (!socket.connected) {
             socket.connect()
         }

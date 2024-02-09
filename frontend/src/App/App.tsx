@@ -1,19 +1,19 @@
 import { Routes, Route } from 'react-router-dom'
 import io from 'socket.io-client';
 import './App.css'
-import Home from '../pages/Home/Home'
-import PublicLobby from '../pages/PublicLobby/PublicLobby'
-import PrivateLobby from '../pages/PrivateLobby/PrivateLobby'
-import CurrentLobby from '../pages/CurrentLobby/CurrentLobby';
+import Home from '../pages/Home'
+import PublicLobby from '../pages/PublicLobby'
+import PrivateLobby from '../pages/PrivateLobby'
+import CurrentLobby from '../pages/CurrentLobby';
 import ProtectedRoute from '../components/ProtectedRoute'
 import { useEffect, useState } from 'react';
 import { LobbyInfosType } from '../types';
 import { CurrentLobbyContext } from '../components/CurrentLobbyContext';
+import { SocketContext } from '../components/SocketContext';
 import { DisconnectionAlert } from '../components/DisconnectionAlert/DisconnectionAlert';
 
-export const backEndUrl = "http://localhost:3000"
-
-export const socket = io(backEndUrl, {
+const backEndUrl = "http://localhost:3000"
+const socket = io(backEndUrl, {
   autoConnect: false
 })
 
@@ -35,18 +35,20 @@ function App() {
 
   return (
     <>
-      <DisconnectionAlert/>
-      <CurrentLobbyContext.Provider value={{ currentLobbyInfos: currentLobbyInfos, setCurrentLobbyInfos }}>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/publiclobby' element={<PublicLobby />} />
-          <Route path='/privatelobby' element={<PrivateLobby />} />
-          <Route path='/play' element={
-            <ProtectedRoute><CurrentLobby /></ProtectedRoute>
-          } />
-          <Route path='*' element={<h1>Page not found... Breath and chill</h1>} />
-        </Routes>
-      </CurrentLobbyContext.Provider>
+      <SocketContext.Provider value={{ socket: socket }}>
+        <DisconnectionAlert />
+        <CurrentLobbyContext.Provider value={{ currentLobbyInfos: currentLobbyInfos, setCurrentLobbyInfos }}>
+          <Routes>
+            <Route path='/' element={<Home />} />
+            <Route path='/publiclobby' element={<PublicLobby />} />
+            <Route path='/privatelobby' element={<PrivateLobby />} />
+            <Route path='/play' element={
+              <ProtectedRoute><CurrentLobby /></ProtectedRoute>
+            } />
+            <Route path='*' element={<h1>Page not found... Breath and chill</h1>} />
+          </Routes>
+        </CurrentLobbyContext.Provider>
+      </SocketContext.Provider>
     </>
 
   )

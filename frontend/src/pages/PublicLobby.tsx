@@ -1,10 +1,11 @@
 import { useEffect } from "react"
-import LobbyList from "../../components/LobbyList/LobbyList"
+import LobbyList from "../components/LobbyList/LobbyList"
 import { Link } from "react-router-dom"
-import { socket } from "../../App/App"
+import { useSocketContext } from "../components/SocketContext"
 
 
 export default function PublicLobby() {
+  const { socket } = useSocketContext()
 
   useEffect(() => {
     socket.emit('join-publiclobby')

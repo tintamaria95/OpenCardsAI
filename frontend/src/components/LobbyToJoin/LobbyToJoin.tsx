@@ -1,9 +1,10 @@
 import {LobbyInfosType } from "../../types";
 import { useNavigate } from "react-router-dom";
 import { useCurrentLobbyContext } from "../CurrentLobbyContext";
-import { socket } from "../../App/App";
+import { useSocketContext } from "../SocketContext";
 
 export default function LobbyToJoin({id, name, players, isPublic}: LobbyInfosType) {
+    const { socket } = useSocketContext()
     const navigate = useNavigate()
     const { setCurrentLobbyInfos } = useCurrentLobbyContext()
 

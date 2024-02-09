@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { socket } from "../../App/App";
+import { useSocketContext } from "../SocketContext";
 import { LobbyInfosType } from "../../types";
 import { Socket } from "socket.io-client";
 
@@ -8,6 +8,7 @@ type LobbyToCreatePropType = {
 }
 
 export default function LobbyToCreate({isPublic}: LobbyToCreatePropType) {
+    const { socket } = useSocketContext()
     const [lobbyName, setLobbyName] = useState("reallyOriginalLobbyName")
     const [isLoading, setIsLoading] = useState(false)  
 

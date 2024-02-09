@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom'
-import LobbyToCreate from '../../components/LobbyToCreate/LobbyToCreate'
+import LobbyToCreate from '../components/LobbyToCreate/LobbyToCreate'
 import { useEffect } from 'react'
-import { useCurrentLobbyContext } from '../../components/CurrentLobbyContext'
+import { useCurrentLobbyContext } from '../components/CurrentLobbyContext'
 import { useNavigate } from 'react-router-dom'
-import { LobbyInfosType } from '../../types'
-import { socket } from '../../App/App'
+import { LobbyInfosType } from '../types'
+import { useSocketContext } from '../components/SocketContext'
 
 function PrivateLobby() {
-
+  const { socket } = useSocketContext()
   const { setCurrentLobbyInfos } = useCurrentLobbyContext()
   const navigate = useNavigate()
 
