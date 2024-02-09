@@ -29,7 +29,7 @@ export default function CurrentLobby() {
                 emitPlayerLeftLobby(socket, currentLobbyInfos?.id, socket.id, currentLobbyInfos?.isPublic)
             }
         }
-    }, [])
+    }, [socket, currentLobbyInfos?.id, currentLobbyInfos?.isPublic])
 
     useEffect(() => {
 
@@ -43,7 +43,7 @@ export default function CurrentLobby() {
             socket.off('update-currentlobby', updateLobbyInfos)
         }
 
-    }, [])
+    }, [socket, setCurrentLobbyInfos])
 
 
     return (

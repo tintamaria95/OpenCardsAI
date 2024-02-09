@@ -22,7 +22,7 @@ function App() {
   const [currentLobbyInfos, setCurrentLobbyInfos] = useState<LobbyInfosType | undefined>(undefined)
 
   useEffect(()=>{
-    function logEventsForDebug(event: any){
+    function logEventsForDebug(event: string){
       console.log(`got ${event}`)
     }
 

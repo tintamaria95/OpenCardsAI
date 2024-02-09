@@ -13,7 +13,7 @@ export default function PublicLobby() {
     return () => {
       socket.emit('left-publiclobby')
     }
-  }, [])
+  }, [socket])
 
   return (
     <>

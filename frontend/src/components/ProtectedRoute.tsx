@@ -14,7 +14,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProp) {
         if (currentLobbyInfos === undefined) {
             navigate('/')
         }
-    }, [currentLobbyInfos])
+    }, [navigate, currentLobbyInfos])
 
     return children
 }

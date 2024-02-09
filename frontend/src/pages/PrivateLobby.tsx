@@ -33,7 +33,7 @@ function PrivateLobby() {
     <>
       <h1>PrivateLobby</h1>
       <span>
-        <div>As-tu un code d'invitation ?</div>
+        <div>As-tu un code d&apos;invitation ?</div>
         <input type="text" placeholder={"Code d'invitation"} />
         <button>Rejoindre lobby privé</button>
       </span>

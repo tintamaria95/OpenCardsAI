@@ -8,10 +8,9 @@ import { useSocketContext } from '../SocketContext'
 
 
 export default function LobbyList() {
-    const { socket } = useSocketContext()
-    
-    const navigate = useNavigate()
     const [lobbyList, setLobbyList] = useState<LobbyInfosType[]>([])
+    const { socket } = useSocketContext()
+    const navigate = useNavigate()
     const { setCurrentLobbyInfos } = useCurrentLobbyContext()
 
     useEffect(() => {
@@ -42,7 +41,8 @@ export default function LobbyList() {
             socket.off('res-create-lobby', updateCreateLobby)
             socket.off('ack-lobby-created', navToCurrentLobby)
         }
-    }, [])
+    }, [socket, navigate, setCurrentLobbyInfos])
+
 
     return (
         <ul> {(lobbyList === undefined) ?

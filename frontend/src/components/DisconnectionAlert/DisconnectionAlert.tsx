@@ -22,7 +22,7 @@ export function DisconnectionAlert() {
             socket.off('connect', handleConnect)
             socket.off('disconnect', handleDisconnect)
         }
-    }, [])
+    }, [socket])
 
     return (
         (isConnected) ? (

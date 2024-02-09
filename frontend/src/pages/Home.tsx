@@ -8,7 +8,7 @@ function Home() {
       <div id="subtitle">Jouez à vos jeux de cartes préférés</div>
       <div> Image du jeu choisi</div>
       <h3>Changer de jeu</h3>
-      <h3>Personnaliser l'avatar</h3>
+      <h3>Personnaliser l&apos;avatar</h3>
       <div id="avatar">Image avatar</div>
       <div id="pseudo">Pseudo joueur</div>
       <div>
@@ -17,7 +17,7 @@ function Home() {
       <div>
         <Link to={'privatelobby'}>Lobby privé</Link>
       </div>
-      <div>Vous avez un code d'invitation ?</div>
+      <div>Vous avez un code d&apos;invitation ?</div>
       <div>Apprenez à jouer...</div>
     </>
   )
