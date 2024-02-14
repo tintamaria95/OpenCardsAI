@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import LobbyToJoin from '../LobbyToJoin/LobbyToJoin'
-import { LobbyInfosType } from '../../types'
-import LobbyToCreate from '../LobbyToCreate/LobbyToCreate'
-import { useCurrentLobbyContext } from '../CurrentLobbyContext'
-import { useSocketContext } from '../SocketContext'
+import LobbyToJoin from './LobbyToJoin'
+import { LobbyInfosType } from '../types'
+import LobbyToCreate from './LobbyToCreate'
+import { useCurrentLobbyContext } from './CurrentLobbyContext'
+import { useSocketContext } from './SocketContext'
 
 
 export default function LobbyList() {
@@ -14,10 +14,6 @@ export default function LobbyList() {
     const { setCurrentLobbyInfos } = useCurrentLobbyContext()
 
     useEffect(() => {
-        if (!socket.connected) {
-            socket.connect()
-        }
-
 
         function updateCreateLobby(lobbyInfos: LobbyInfosType){
             setLobbyList((prev) => [...prev, lobbyInfos])
@@ -49,11 +45,16 @@ export default function LobbyList() {
             (
                 <div>LOADING...</div>
             ) : (<>
-                <LobbyToCreate isPublic={true}/>
+                <LobbyToCreate isPublic={true} />
                 <div>--- Existing lobbies ---</div>
                 {lobbyList.map((lobby, index) => (
                     <li key={index}>
-                        <LobbyToJoin id={lobby.id} name={lobby.name} players={lobby.players} isPublic={lobby.isPublic}/>
+                        <LobbyToJoin
+                            id={lobby.id}
+                            name={lobby.name}
+                            players={lobby.players}
+                            createdAt={lobby.createdAt}
+                            isPublic={lobby.isPublic} />
                     </li>
                 ))}
             </>)}

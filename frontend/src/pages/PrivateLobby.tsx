@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import LobbyToCreate from '../components/LobbyToCreate/LobbyToCreate'
+import LobbyToCreate from '../components/LobbyToCreate'
 import { useEffect } from 'react'
 import { useCurrentLobbyContext } from '../components/CurrentLobbyContext'
 import { useNavigate } from 'react-router-dom'
@@ -15,7 +15,7 @@ function PrivateLobby() {
 
     if (!socket.connected) {
       socket.connect()
-  }
+    }
 
     function navToCurrentLobby(lobbyInfos: LobbyInfosType) {
       setCurrentLobbyInfos(lobbyInfos)
@@ -39,7 +39,7 @@ function PrivateLobby() {
       </span>
       <div></div>
       <span>
-        <LobbyToCreate isPublic={false}/>
+        <LobbyToCreate isPublic={false} />
       </span>
       <div>
         <Link to={'/'}>retour</Link>

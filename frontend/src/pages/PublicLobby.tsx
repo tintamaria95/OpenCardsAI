@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import LobbyList from "../components/LobbyList/LobbyList"
+import LobbyList from "../components/LobbyList"
 import { Link } from "react-router-dom"
 import { useSocketContext } from "../components/SocketContext"
 
@@ -9,7 +9,6 @@ export default function PublicLobby() {
 
   useEffect(() => {
     socket.emit('join-publiclobby')
-
     return () => {
       socket.emit('left-publiclobby')
     }

@@ -1,0 +1,18 @@
+<table>
+    <tr>
+        <th>sessionId</th>
+        <th>userId</th>
+        <th>username</th>
+        <th>imageName</th>
+        <th>createdAt</th>
+    </tr>
+    <% sessions.forEach(session => {%>
+    <tr>
+        <td><%=session.sessionId%></td>
+        <td><%=session.userId%></td>
+        <td><%=session.username%></td>
+        <td><%=session.imageName%></td>
+        <td><%= new Date(session.createdAt).toLocaleString();%></td>
+    </tr>
+    <%});%>
+</table>

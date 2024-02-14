@@ -5,8 +5,10 @@ import * as socketio from 'socket.io'
 import * as path from 'path'
 import logger from './logger'
 import { LobbyInfosType, PlayerType } from './types'
-import { handleUserJoinsLobby, addNewLobbyToList, ROOMPUBLICLOBBY, userLobby, handleUserLeftLobby, emitCreateLobby, emitSetLobbyList, emitAckLobbyCreated } from './handleLobbyChanges'
+import { handleUserJoinsLobby, addNewLobbyToList, ROOMPUBLICLOBBY, userLobby, handleUserLeftLobby, emitCreateLobby, emitAckLobbyCreated, emitSetLobbyListToUser } from './handleLobbyChanges'
 import * as cors from 'cors'
+import { InMemorySessionsStore } from './sessionStore'
+import { randomUUID } from 'crypto'
 
 const PORT = 3000
 
@@ -25,6 +27,8 @@ const corsOptions = {
   credentials: true
 }
 
+
+
 app.use(express.static('public'))
 app.use(bodyParser.json())
 app.use(cors.default(corsOptions))
@@ -32,6 +36,8 @@ app.use(cors.default(corsOptions))
 // EJS
 app.set('view engine', 'ejs')
 
+// Players sessions
+const sessionStore = new InMemorySessionsStore()
 // Lobby list in RAM
 const publicLobbyList: LobbyInfosType[] = []
 const privateLobbyList: LobbyInfosType[] = []
@@ -39,17 +45,64 @@ const privateLobbyList: LobbyInfosType[] = []
 app.get('/', (req: Request, res: Response) => {
   res.render(path.join(__dirname, '../index.ejs'), {
     public: publicLobbyList,
-    private: privateLobbyList})
+    private: privateLobbyList,
+    sessions: sessionStore.findAllSessions()
+  })
 })
 
+io.use((socket, next) => {
+  const isShowlog = false
+  const sessionId = socket.handshake.auth.sessionId as string
+  if (isShowlog) { logger.showSessionId(sessionId) }
+  if (sessionId) {
+    const session = sessionStore.findSession(sessionId)
+    if (session) {
+      socket.handshake.auth.sessionId = sessionId
+      if (isShowlog) {logger.confirmSessionIdInSessionStore(session.userId, session.username)} 
+      return next()
+    }
+  }
+  if (isShowlog) { logger.denySessionIdInSessionStore()}
+  const newSessionId = randomUUID()
+  const newUserId = randomUUID()
+  const username = 'User' + Math.floor(Math.random() * 1000).toString()
 
-io.on('connection', (socket) => {
-  logger.info(`New user connected: ${socket.id}`)
+  socket.handshake.auth.sessionId = newSessionId
+  sessionStore.saveSession(newSessionId, {
+    sessionId: newSessionId,
+    userId: newUserId,
+    username: username,
+    imageName: "_",
+    createdAt: Date.now()
+  })
+  if (isShowlog) {
+    logger.createdNewSession(newSessionId, newUserId, username)
+  } next()
+})
 
+io.on('connection', async (socket) => {
+
+  socket.onAny((event) => {console.log(`got ${event}`)})
+
+  const sessionId = socket.handshake.auth.sessionId as string
+  const session = sessionStore.findSession(sessionId)
+  if (!session){
+    logger.sessionNotFound(sessionId)
+    return Error('Session not found')}
   
+  socket.join(session.userId)
+  io.to(session.userId).emit('session', session)
+
+  logger.userConnected(sessionId)
+
+  socket.on('update-username', (username: string) => {
+    sessionStore.saveSession(sessionId, {...session, username: username})
+    logger.userUpdatedUsername(sessionId, username)
+  })
+
   socket.on('join-publiclobby', async () => {
     await socket.join(ROOMPUBLICLOBBY)
-    emitSetLobbyList(io, publicLobbyList)
+    emitSetLobbyListToUser(io, publicLobbyList, socket.id)
   })
 
 
@@ -74,17 +127,23 @@ io.on('connection', (socket) => {
     }
   })
 
+  socket.on('req-join-lobby', async(lobbyId: LobbyInfosType['id'], playerId: PlayerType['sessionId']) =>{
+    
+  })
+
 
   socket.on('join-currentlobby', async (lobbyId: LobbyInfosType['id'], playerInfos: PlayerType, isPublic: boolean) => {
+    await socket.leave(ROOMPUBLICLOBBY)
+    await socket.join(lobbyId)
     if (isPublic) {
-      await handleUserJoinsLobby(io, socket, publicLobbyList, lobbyId, playerInfos)
+      handleUserJoinsLobby(io, socket, publicLobbyList, lobbyId, playerInfos)
     } else {
-      await handleUserJoinsLobby(io, socket, privateLobbyList, lobbyId, playerInfos)
+      handleUserJoinsLobby(io, socket, privateLobbyList, lobbyId, playerInfos)
     }
   })
 
 
-  socket.on('left-currentlobby', async (lobbyId: LobbyInfosType['id'], playerId: PlayerType['id'], isPublic: boolean) => {
+  socket.on('left-currentlobby', async (lobbyId: LobbyInfosType['id'], playerId: PlayerType['userId'], isPublic: boolean) => {
     if (isPublic) {
       handleUserLeftLobby(io, socket, publicLobbyList, lobbyId, playerId)
     }
@@ -98,7 +157,7 @@ io.on('connection', (socket) => {
 
 
   socket.on('disconnect', () => {
-    logger.info(`User disconnected: ${socket.id}`)
+    logger.userDisconnected(sessionId)
     const lobbyId = userLobby(publicLobbyList, socket.id)
     if (lobbyId !== undefined) {
       handleUserLeftLobby(io, socket, publicLobbyList, lobbyId, socket.id)
@@ -109,5 +168,5 @@ io.on('connection', (socket) => {
 
 
 httpServer.listen(PORT, () => {
-  logger.info(`Back-end running: Listening on http://localhost:${PORT}`)
+  logger.backendRunning(PORT)
 })

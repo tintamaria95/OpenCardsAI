@@ -6,15 +6,11 @@ import { randomUUID } from "crypto";
 
 export const ROOMPUBLICLOBBY = 'publiclobby'
 
-
-export async function handleUserJoinsLobby(io: Server, socket: Socket, lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerInfos: PlayerType) {
+export function handleUserJoinsLobby(io: Server, socket: Socket, lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerInfos: PlayerType) {
     const updatedLobby = addUserToLobby(lobbyList, lobbyId, playerInfos)
     if (updatedLobby == undefined) {
         // TODO handle error lobby not found
     } else {
-        await socket.leave(ROOMPUBLICLOBBY)
-        await socket.join(lobbyId)
-
         io.to(lobbyId).emit('update-currentlobby', updatedLobby)
         if (updatedLobby.isPublic) {
             emitSetLobbyList(io, lobbyList)
@@ -22,8 +18,8 @@ export async function handleUserJoinsLobby(io: Server, socket: Socket, lobbyList
     }
 }
 
-export function userLobby(lobbyList: LobbyInfosType[], playerId: PlayerType['id']){
-    const lobby =  lobbyList.find(lobby => lobby.players.some(player => player.id === playerId))
+export function userLobby(lobbyList: LobbyInfosType[], playerId: PlayerType['userId']){
+    const lobby =  lobbyList.find(lobby => lobby.players.some(player => player.userId === playerId))
     if (lobby !== undefined) {
         return lobby.id
     }
@@ -36,7 +32,9 @@ export function addNewLobbyToList(lobbyList: LobbyInfosType[], lobbyInfos: Lobby
 }
 
 export function removeLobbyFromList(lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id']) {
-    return lobbyList.filter(lobby => lobby.id !== lobbyId)
+    const index = lobbyList.findIndex(lobby => lobby.id === lobbyId)
+    if (index > -1){
+    lobbyList.splice(index, 1)}
 }
 
 export function emitAckLobbyCreated(io: Server, lobbyInfos: LobbyInfosType){
@@ -47,36 +45,46 @@ export function emitCreateLobby(io: Server, lobbyInfos: LobbyInfosType) {
     io.to(ROOMPUBLICLOBBY).emit('res-create-lobby', lobbyInfos)
 }
 
+export function emitSetLobbyListToUser(io: Server, lobbyList: LobbyInfosType[], socketId: string){
+    io.to(socketId).emit('res-set-lobbylist', lobbyList)
+}
+
 export function emitSetLobbyList(io: Server, lobbyList: LobbyInfosType[]){
     io.to(ROOMPUBLICLOBBY).emit('res-set-lobbylist', lobbyList)
 }
 
 export function addUserToLobby(lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerInfos: PlayerType) {
+    // logger.addUserToLobby(playerInfos.userId, lobbyId)
     const lobbyToUpdate = lobbyList.find(lobby => lobby.id == lobbyId)
     if (lobbyToUpdate !== undefined) {
-        if (lobbyToUpdate.players.find(player => player.id == playerInfos.id) == undefined) {
-            lobbyToUpdate.players.push({ id: playerInfos.id, name: playerInfos.name })
-        } else { logger.warn(`User with id "${playerInfos.id}" already in lobby with id "${lobbyId}"`) }
-    } else { logger.error(`Impossible to add user to lobby: Lobby with id "${lobbyId}" is undefined in lobbyList`) }
+        if (lobbyToUpdate.players.find(player => player.userId == playerInfos.userId) == undefined) {
+            lobbyToUpdate.players.push(playerInfos)
+        } else { logger.userAlreadyInLobby(playerInfos.userId, lobbyId)}
+    } else { logger.undefinedLobby(lobbyId) }
     return lobbyToUpdate
 }
 
-export function removeUserFromLobby(lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerId: PlayerType['id']) {
+export function removeUserFromLobby(lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerId: PlayerType['userId']) {
+    // logger.removeUserFromLobby(playerId, lobbyId)
     const lobbyToUpdate = lobbyList.find(lobby => lobby.id == lobbyId)
     if (lobbyToUpdate !== undefined) {
-        if (lobbyToUpdate.players.find(player => player.id == playerId) !== undefined) {
-            lobbyToUpdate.players = lobbyToUpdate.players.filter(player => player.id !== playerId)
-        } else { logger.warn(`User with id "${playerId}" not in lobby with id "${lobbyId}"`) }
-    } else { logger.error(`Impossible to add user to lobby: Lobby with id "${lobbyId}" is undefined in lobbyList`) }
+        if (lobbyToUpdate.players.find(player => player.userId == playerId) !== undefined) {
+            lobbyToUpdate.players = lobbyToUpdate.players.filter(player => player.userId !== playerId)
+        } else { logger.userNotInLobby(playerId, lobbyId) }
+    } else { logger.undefinedLobby(lobbyId) }
     return lobbyToUpdate
 }
 
-export function handleUserLeftLobby(io: Server, socket: Socket, lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerId: PlayerType['id']){
+export function handleUserLeftLobby(io: Server, socket: Socket, lobbyList: LobbyInfosType[], lobbyId: LobbyInfosType['id'], playerId: PlayerType['userId']) {
     const updatedLobby = removeUserFromLobby(lobbyList, lobbyId, playerId)
-    socket.to(lobbyId).emit('update-currentlobby', updatedLobby)
     if (updatedLobby !== undefined) {
+        if (updatedLobby.players.length === 0) {
+            removeLobbyFromList(lobbyList, updatedLobby.id)
+        } else {
+            socket.to(lobbyId).emit('update-currentlobby', updatedLobby)
+        }
         if (updatedLobby.isPublic) {
             emitSetLobbyList(io, lobbyList)
         }
-}
+    }
 }

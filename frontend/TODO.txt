@@ -1,0 +1,4 @@
+UserContext
+usernames in lobbies
+comparer usernames
+pas 2 fois le même username in lobby sinon, retour au Globalmenu

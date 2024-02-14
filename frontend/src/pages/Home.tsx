@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Username } from '../components/Username'
 
 function Home() {
   
@@ -8,9 +9,9 @@ function Home() {
       <div id="subtitle">Jouez à vos jeux de cartes préférés</div>
       <div> Image du jeu choisi</div>
       <h3>Changer de jeu</h3>
-      <h3>Personnaliser l&apos;avatar</h3>
       <div id="avatar">Image avatar</div>
-      <div id="pseudo">Pseudo joueur</div>
+      <h3>Personnaliser l&apos;avatar</h3>
+      <Username/>
       <div>
         <Link to={'publiclobby'}>Lobbys publics</Link>
       </div>

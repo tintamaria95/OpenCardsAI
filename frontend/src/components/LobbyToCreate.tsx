@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useSocketContext } from "../SocketContext";
-import { LobbyInfosType } from "../../types";
+import { useSocketContext } from "./SocketContext";
+import { LobbyInfosType } from "../types";
 import { Socket } from "socket.io-client";
+import { useUserContext } from "./UserContext";
 
 type LobbyToCreatePropType = {
     isPublic: boolean
@@ -9,8 +10,8 @@ type LobbyToCreatePropType = {
 
 export default function LobbyToCreate({isPublic}: LobbyToCreatePropType) {
     const { socket } = useSocketContext()
-    const [lobbyName, setLobbyName] = useState("reallyOriginalLobbyName")
-    const [isLoading, setIsLoading] = useState(false)  
+    const { username } = useUserContext()
+    const [lobbyName, setLobbyName] = useState(username + "'s lobby")
 
     function emitCreateLobby(socket: Socket, lobbyInfos: LobbyInfosType){
         socket.emit('req-create-lobby', lobbyInfos)
@@ -18,7 +19,6 @@ export default function LobbyToCreate({isPublic}: LobbyToCreatePropType) {
 
     function handleCreateNewLobby() {
         if (socket.id !== undefined) {
-            setIsLoading(true)
             const newLobbyInfos: LobbyInfosType = {
                 id: 'temp',
                 name: lobbyName,
@@ -32,12 +32,11 @@ export default function LobbyToCreate({isPublic}: LobbyToCreatePropType) {
     }
 
     
-    return ((isLoading) ? (
-        <div>LOADING...</div>) : (
+    return (
         <>
             <input placeholder={"reallyOriginalLobbyName"} onChange={e => setLobbyName(e.target.value)} />
             <button onClick={handleCreateNewLobby}>Create new lobby</button>
-        </>)
+        </>
 
     )
 }

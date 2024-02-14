@@ -35,6 +35,10 @@
         <h3>Private lobbies</h3>
           <%- include('./lobbyTable.ejs', {lobbyList: private});%>
       </section>
+      <section>
+        <h2>Users</h2>
+        <%- include('./userTable.ejs', {sessions: sessions});%>
+      </section>
     </body>
     
     </html>
