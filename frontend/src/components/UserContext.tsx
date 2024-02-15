@@ -8,7 +8,9 @@ type UserContent = {
     username: string,
     setUsername: (username: string) => void
     imageName: string,
-    setImageName: (imageName: string) => void
+    setImageName: (imageName: string) => void,
+    lobbyId: string,
+    setLobbyId: (lobbyId: string) => void
 }
 
 export const UserContext = createContext<UserContent>({
@@ -19,7 +21,9 @@ export const UserContext = createContext<UserContent>({
     username: 'username',
     setUsername: () => {},
     imageName: 'userImageTemplate.png',
-    setImageName: () => {}
+    setImageName: () => {},
+    lobbyId: 'lobbyId',
+    setLobbyId: () => {}
 })
 
 

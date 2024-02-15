@@ -1,15 +1,17 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import io from 'socket.io-client';
 import './App.css'
 import CurrentLobby from '../pages/CurrentLobby';
-import { ProtectedRouteCurrentLobby } from '../components/ProtectedRoutes';
 import { useEffect, useState } from 'react';
-import { LobbyInfosType } from '../types';
+import { LobbyFrontType } from '../types';
 import { CurrentLobbyContext } from '../components/CurrentLobbyContext';
 import { UserContextProvider } from '../components/UserContextProvider';
 import { SocketContext } from '../components/SocketContext';
 import { DisconnectionAlert } from '../components/DisconnectionAlert/DisconnectionAlert';
-import { GlobalMenu } from '../components/Menu';
+import Home from '../pages/Home';
+import PublicLobby from '../pages/PublicLobby';
+import PrivateLobby from '../pages/PrivateLobby';
+import { ProtectedRouteCurrentLobby, ProtectedRouteUsername } from '../components/ProtectedRoutes';
 
 const backEndUrl = "http://localhost:3000"
 const socket = io(backEndUrl, {
@@ -19,15 +21,29 @@ const socket = io(backEndUrl, {
 
 function App() {
 
-  const [currentLobbyInfos, setCurrentLobbyInfos] = useState<LobbyInfosType | undefined>(undefined)
+  const [currentLobby, setCurrentLobby] = useState<LobbyFrontType | undefined>(undefined)
+  const navigate = useNavigate()
 
   useEffect(() => {
+
     function logEventsForDebug(event: string) {
       console.log(`got ${event}`)
     }
+    function updateLobby(lobby: LobbyFrontType) {
+      setCurrentLobby(lobby)
+    }
+    function resNavigateToLobby(lobby: LobbyFrontType) {
+      setCurrentLobby(lobby)
+      navigate('/play')
+    }
+
     socket.onAny(logEventsForDebug)
+    socket.on('res-join-lobby', resNavigateToLobby)
+    socket.on('update-currentlobby', updateLobby)
     return () => {
       socket.offAny(logEventsForDebug)
+      socket.off('update-currentlobby', updateLobby)
+      socket.off('res-join-lobby', resNavigateToLobby)
     }
   }, [socket])
 
@@ -45,9 +61,11 @@ function App() {
       <SocketContext.Provider value={{ socket: socket }}>
         <DisconnectionAlert />
         <UserContextProvider>
-          <CurrentLobbyContext.Provider value={{ currentLobbyInfos: currentLobbyInfos, setCurrentLobbyInfos }}>
+          <CurrentLobbyContext.Provider value={{ currentLobby: currentLobby, setCurrentLobby }}>
             <Routes>
-              <Route path='*' element={<GlobalMenu />} />
+              <Route path='/' element={<Home />} />
+              <Route path='/publiclobby' element={<ProtectedRouteUsername><PublicLobby /></ProtectedRouteUsername>} />
+              <Route path='/privatelobby' element={<ProtectedRouteUsername><PrivateLobby /></ProtectedRouteUsername>} />
               <Route path='/play' element={
                 <ProtectedRouteCurrentLobby><CurrentLobby /></ProtectedRouteCurrentLobby>
               } />

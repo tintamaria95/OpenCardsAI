@@ -1,13 +1,13 @@
 import { createContext, useContext } from "react"
-import { LobbyInfosType } from "../types"
+import { LobbyFrontType } from "../types"
 
 type CurrentLobbyContent = {
-    currentLobbyInfos?: LobbyInfosType
-    setCurrentLobbyInfos: (currentLobbyInfos: LobbyInfosType) => void
+    currentLobby?: LobbyFrontType
+    setCurrentLobby: (currentLobby: LobbyFrontType | undefined) => void
   }
   export const CurrentLobbyContext = createContext<CurrentLobbyContent>({
-    currentLobbyInfos: undefined,
-    setCurrentLobbyInfos: () => {}
+    currentLobby: undefined,
+    setCurrentLobby: () => {}
   })
 
   export const useCurrentLobbyContext = () => useContext(CurrentLobbyContext)

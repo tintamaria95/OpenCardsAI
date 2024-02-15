@@ -1,5 +1,5 @@
 import { useState, useEffect, ReactElement } from "react"
-import { PlayerType } from "../types"
+import { UserFrontType } from "../types"
 import { useSocketContext } from "./SocketContext"
 import { UserContext } from "./UserContext"
 
@@ -16,24 +16,25 @@ export function UserContextProvider({children}: {children: ReactElement}) {
     const [userId, setUserId] = useState(initFromStorage('userId'))
     const [username, setUsername] = useState(initFromStorage('username'))
     const [imageName, setImageName] = useState(initFromStorage('imageName'))
+    const [lobbyId, setLobbyId] = useState(initFromStorage('lobbyId'))
     const { socket } = useSocketContext()
 
     useEffect(() => {
-        function setPlayerInfosInLocalStorage(player: PlayerType) {
-          if (player.sessionId){
-          localStorage.setItem('sessionId', player.sessionId)}
+        function setUserInLocalStorage(user: UserFrontType) {
+          if (user.sessionId){
+          localStorage.setItem('sessionId', user.sessionId)}
           else{
-            console.log('Error: player.sessionId is undefined')
+            console.log('Error: user.sessionId is undefined')
           }
-          localStorage.setItem('userId', player.userId)
-          localStorage.setItem('username', player.username)
-          localStorage.setItem('imageName', player.imageName)
-          setUsername(player.username)
-          setImageName(player.imageName)
+          localStorage.setItem('userId', user.userId)
+          localStorage.setItem('username', user.username)
+          localStorage.setItem('imageName', user.imageName)
+          setUsername(user.username)
+          setImageName(user.imageName)
         }
-        socket.on('session', setPlayerInfosInLocalStorage)
+        socket.on('session', setUserInLocalStorage)
         return () => {
-          socket.off('session', setPlayerInfosInLocalStorage)
+          socket.off('session', setUserInLocalStorage)
         }
     
       }, [socket])
@@ -43,7 +44,8 @@ export function UserContextProvider({children}: {children: ReactElement}) {
             sessionId: sessionId, setSessionId: setSessionId,
             userId: userId, setUserId: setUserId,
             username: username, setUsername: setUsername,
-            imageName: imageName, setImageName: setImageName
+            imageName: imageName, setImageName: setImageName,
+            lobbyId: lobbyId, setLobbyId: setLobbyId
           }}>
             {children}
         </UserContext.Provider>

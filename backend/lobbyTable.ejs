@@ -2,14 +2,14 @@
     <tr>
         <th>id</th>
         <th>name</th>
-        <th>number of players</th>
+        <th>number of users</th>
         <th>createdAt</th>
     </tr>
     <% lobbyList.forEach(lobby => {%>
     <tr>
         <td><%=lobby.id%></td>
         <td><%=lobby.name%></td>
-        <td><%=lobby.players.length%></td>
+        <td><%=lobby.users.length%></td>
         <td><%= new Date(lobby.createdAt).toLocaleString();%></td>
     </tr>
     <%});%>

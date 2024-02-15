@@ -3,8 +3,8 @@ import { Navigate } from "react-router-dom"
 import { useCurrentLobbyContext } from "./CurrentLobbyContext"
 
 export function ProtectedRouteCurrentLobby({ children }: {children: ReactElement}) {
-    const { currentLobbyInfos } = useCurrentLobbyContext()
-    if (currentLobbyInfos === undefined) {
+    const { currentLobby } = useCurrentLobbyContext()
+    if (currentLobby === undefined) {
                 return <Navigate to='/' replace/>
             }
     return children

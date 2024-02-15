@@ -1,30 +1,30 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LobbyToJoin from './LobbyToJoin'
-import { LobbyInfosType } from '../types'
+import { LobbyFrontType } from '../types'
 import LobbyToCreate from './LobbyToCreate'
 import { useCurrentLobbyContext } from './CurrentLobbyContext'
 import { useSocketContext } from './SocketContext'
 
 
 export default function LobbyList() {
-    const [lobbyList, setLobbyList] = useState<LobbyInfosType[]>([])
+    const [lobbyList, setLobbyList] = useState<LobbyFrontType[]>([])
     const { socket } = useSocketContext()
     const navigate = useNavigate()
-    const { setCurrentLobbyInfos } = useCurrentLobbyContext()
+    const { setCurrentLobby } = useCurrentLobbyContext()
 
     useEffect(() => {
 
-        function updateCreateLobby(lobbyInfos: LobbyInfosType){
-            setLobbyList((prev) => [...prev, lobbyInfos])
+        function updateCreateLobby(lobby: LobbyFrontType){
+            setLobbyList((prev) => [...prev, lobby])
         }
 
-        function updateSetLobbyList(lobbyList: LobbyInfosType[]){
+        function updateSetLobbyList(lobbyList: LobbyFrontType[]){
             setLobbyList(lobbyList)
         }
 
-        function navToCurrentLobby(lobbyInfos: LobbyInfosType){
-            setCurrentLobbyInfos(lobbyInfos)
+        function navToCurrentLobby(lobby: LobbyFrontType){
+            setCurrentLobby(lobby)
             navigate('/play')
         }
 
@@ -37,7 +37,7 @@ export default function LobbyList() {
             socket.off('res-create-lobby', updateCreateLobby)
             socket.off('ack-lobby-created', navToCurrentLobby)
         }
-    }, [socket, navigate, setCurrentLobbyInfos])
+    }, [socket, navigate, setCurrentLobby])
 
 
     return (
@@ -52,8 +52,7 @@ export default function LobbyList() {
                         <LobbyToJoin
                             id={lobby.id}
                             name={lobby.name}
-                            players={lobby.players}
-                            createdAt={lobby.createdAt}
+                            users={lobby.users}
                             isPublic={lobby.isPublic} />
                     </li>
                 ))}

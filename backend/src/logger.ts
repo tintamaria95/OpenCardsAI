@@ -1,5 +1,7 @@
 import winston from 'winston'
 import * as dotenv from 'dotenv'
+import { UserInfo } from 'os'
+import { LobbyBackType, UserBackType } from './types'
 
 dotenv.config()
 
@@ -33,11 +35,11 @@ class MainLogger {
   }
 
   // Middleware
-  showSessionId(sessionId: string){
+  showSessionId(sessionId: UserBackType['sessionId']){
     this.logger.debug(`Middleware: User sessionId: ${sessionId}`)
   }
 
-  confirmSessionIdInSessionStore(userId: string, username: string){
+  confirmSessionIdInSessionStore(userId: UserBackType['userId'], username: UserBackType['username']){
     this.logger.debug(`Middleware: sessionId is in sessionStore:
       -> userId: ${userId}
       -> username: ${username}`)
@@ -47,7 +49,7 @@ class MainLogger {
     this.logger.debug(`Middleware: sessionId not found`)
   }
 
-  createdNewSession(sessionId: string, userId: string, username: string){
+  createdNewSession(sessionId: UserBackType['sessionId'], userId: UserBackType['userId'], username: UserBackType['username']){
     this.logger.debug(`Middleware: Created new session:
       -> sessionId: ${sessionId}
       -> userId: ${userId}
@@ -57,39 +59,42 @@ class MainLogger {
 
   // After Connection
 
-  userConnected(sessionId: string){
+  userConnected(sessionId: UserBackType['sessionId']){
     this.logger.debug(`User connected | sessionId: ${sessionId}`)
   }
 
-  userDisconnected(sessionId: string){
+  userDisconnected(sessionId: UserBackType['sessionId']){
     this.logger.debug(`User disconnected | sessionId: ${sessionId}`)
   }
 
-  userUpdatedUsername(sessionId: string, newUsername: string){
+  userUpdatedUsername(sessionId: UserBackType['sessionId'], newUsername: UserBackType['username']){
     this.logger.debug(`User updated username: ${newUsername} | sessionId: ${sessionId}`)
   }
 
-  addUserToLobby(userId: string, lobbyId: string){
-    this.logger.debug(`Called addUserToLobby function | userId: ${userId} | lobbyId: ${lobbyId}`)
+  addUserToLobby(sessionId: UserBackType['sessionId'], lobbyId: LobbyBackType['id']){
+    this.logger.debug(`Called addUserToLobby function | userId: ${sessionId} | lobbyId: ${lobbyId}`)
   }
-  removeUserFromLobby(userId: string, lobbyId: string){
-    this.logger.debug(`Called removeUserFromLobby function | userId: ${userId} | lobbyId: ${lobbyId}`)
+  removeUserFromLobby(sessionId: UserBackType['sessionId'], lobbyId: LobbyBackType['id']){
+    this.logger.debug(`Called removeUserFromLobby function | userId: ${sessionId} | lobbyId: ${lobbyId}`)
   }
 
   // Warnings
-  userAlreadyInLobby(userId: string, lobbyId: string){
-    this.logger.warn(`User with id "${userId}" already in lobby with id "${lobbyId}". ${this.DEVmodeWarnString}`)
+  userAlreadyInLobby(sessionId: UserBackType['sessionId'], lobbyId: LobbyBackType['id']){
+    this.logger.warn(`User with sessionId "${sessionId}" already in lobby with id "${lobbyId}". ${this.DEVmodeWarnString}`)
   }
-  userNotInLobby(userId: string, lobbyId: string){
-    this.logger.warn(`User with id "${userId}" not in lobby with id "${lobbyId}". ${this.DEVmodeWarnString}`)
+  userNotInLobby(sessionId: UserBackType['sessionId'], lobbyId: LobbyBackType['id']){
+    this.logger.warn(`User with sessionId "${sessionId}" not in lobby with id "${lobbyId}". ${this.DEVmodeWarnString}`)
   }
-  undefinedLobby(lobbyId: string){
+  undefinedLobby(lobbyId: LobbyBackType['id']| undefined){
     this.logger.warn(`Lobby with id "${lobbyId}" is undefined in lobbyList. ${this.DEVmodeWarnString}`)
+  }
+  undefinedLobbyId(){
+    this.logger.error('LobbyId is undefined!')
   }
 
   // Errors
 
-  sessionNotFound(sessionId: string){
+  sessionNotFound(sessionId: UserBackType['sessionId']){
       this.logger.error(`Session not found | sessionId: ${sessionId}`)
     }
 

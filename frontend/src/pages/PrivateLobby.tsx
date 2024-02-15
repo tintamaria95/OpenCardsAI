@@ -3,12 +3,12 @@ import LobbyToCreate from '../components/LobbyToCreate'
 import { useEffect } from 'react'
 import { useCurrentLobbyContext } from '../components/CurrentLobbyContext'
 import { useNavigate } from 'react-router-dom'
-import { LobbyInfosType } from '../types'
+import { LobbyFrontType } from '../types'
 import { useSocketContext } from '../components/SocketContext'
 
 function PrivateLobby() {
   const { socket } = useSocketContext()
-  const { setCurrentLobbyInfos } = useCurrentLobbyContext()
+  const { setCurrentLobby } = useCurrentLobbyContext()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -17,8 +17,8 @@ function PrivateLobby() {
       socket.connect()
     }
 
-    function navToCurrentLobby(lobbyInfos: LobbyInfosType) {
-      setCurrentLobbyInfos(lobbyInfos)
+    function navToCurrentLobby(lobby: LobbyFrontType) {
+      setCurrentLobby(lobby)
       navigate('/play')
     }
 

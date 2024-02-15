@@ -1,4 +1,4 @@
-import { PlayerType } from "./types"
+import { UserBackType } from "./types"
 
 
 
@@ -7,15 +7,15 @@ export class InMemorySessionsStore {
     private sessions
 
     constructor() {
-        this.sessions = new Map<string, PlayerType>()
+        this.sessions = new Map<string, UserBackType>()
     }
 
     findSession(id: string) {
         return this.sessions.get(id)
     }
 
-    saveSession(id: string, player: PlayerType): void {
-        this.sessions.set(id, player)
+    saveSession(id: string, user: UserBackType): void {
+        this.sessions.set(id, user)
     }
 
     findAllSessions() {
