@@ -1,2 +1,2 @@
-check not emit with socket.id -> replace with userId or lobbyId logic ?
-check two same userId cannot be in same lobby
+-> possibilité d'avoir même user dans plusieurs lobbies mais pas possible d'avoir même user dans même lobby
+-> users connectés via sessionId récupéré dans localStorage

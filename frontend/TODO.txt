@@ -2,3 +2,11 @@ UserContext
 usernames in lobbies
 comparer usernames
 pas 2 fois le même username in lobby sinon, retour au Globalmenu
+
+attention si deux mêmes users avec même id 234:
+- un user234 dans inlobby
+- un user234 arrive dans publiclobby -> user dans inlobby reçoit aussi socket d'actu de la liste -> mieux gérer les sockets quand dans menu, hors menu 
+
+gérer le retour arrière par une navigation directe au menu
+
+plus besoin d'un currentLobby context ? -> direct dans inlobby (bon pour séparer les écoutes socket)

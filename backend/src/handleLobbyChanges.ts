@@ -13,12 +13,12 @@ export function handleUserJoinsLobby(io: Server, lobbyStore: InMemoryLobbiesStor
     } else {
         io.to(lobbyId).emit('update-currentlobby', updatedLobby)
         if (updatedLobby.isPublic) {
-            io.to(ROOMPUBLICLOBBY).emit('res-set-lobbylist', lobbyStore.findAllLobbies())
+            io.to(ROOMPUBLICLOBBY).emit('res-set-lobbylist', lobbyStore.getAllLobbies())
         }
     }
 }
 
-export function handleUserLeftLobby(io: Server, socket: Socket, lobbyStore: InMemoryLobbiesStore, lobbyId: LobbyBackType['id'], user: UserBackType) {
+export function handleUserLeftLobby(io: Server, lobbyStore: InMemoryLobbiesStore, lobbyId: LobbyBackType['id'], user: UserBackType) {
     const updatedLobby = lobbyStore.removeUserfromLobby(user, lobbyId)
     if (updatedLobby === undefined) {
         logger.undefinedLobby(lobbyId)
@@ -27,10 +27,10 @@ export function handleUserLeftLobby(io: Server, socket: Socket, lobbyStore: InMe
         if (updatedLobby.users.size === 0) {
             lobbyStore.deleteLobby(lobbyId)
         } else {
-            socket.to(lobbyId).emit('update-currentlobby', updatedLobby)
+            io.to(lobbyId).emit('update-currentlobby', lobbyStore.getLobbyForFront(lobbyId))
         }
         if (updatedLobby.isPublic) {
-            io.to(ROOMPUBLICLOBBY).emit('res-set-lobbylist', lobbyStore.findAllLobbies())
+            io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-setall', lobbyStore.getAllLobbiesForFront())
         }
     }
 }

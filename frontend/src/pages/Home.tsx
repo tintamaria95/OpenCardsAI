@@ -1,8 +1,24 @@
 import { Link } from 'react-router-dom'
 import { Username } from '../components/Username'
+import { useSocketContext } from '../components/SocketContext'
 
-function Home() {
-  
+type HomeProp = {
+  setIsActivated: (isActivated: boolean) => void
+}
+
+function Home({setIsActivated}: HomeProp) {
+  const {socket} = useSocketContext()
+
+  function handleJoinPublicLobby(){
+    setIsActivated(false)
+    socket.emit('join-publiclobby')
+  }
+
+
+  function handleJoinPrivateLobby(){
+    setIsActivated(false)
+  }
+
   return (
     <>
       <h1>CARDGAMES</h1>
@@ -13,10 +29,10 @@ function Home() {
       <h3>Personnaliser l&apos;avatar</h3>
       <Username/>
       <div>
-        <Link to={'publiclobby'}>Lobbys publics</Link>
+        <Link to={'publiclobby'} onClick={handleJoinPublicLobby}>Lobbys publics</Link>
       </div>
       <div>
-        <Link to={'privatelobby'}>Lobby privé</Link>
+        <Link to={'privatelobby'} onClick={handleJoinPrivateLobby}>Lobby privé</Link>
       </div>
       <div>Vous avez un code d&apos;invitation ?</div>
       <div>Apprenez à jouer...</div>

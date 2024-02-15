@@ -17,3 +17,9 @@ export function ProtectedRouteUsername({ children }: {children: ReactElement}) {
     }
     return children
 }
+
+export function ForceHomePath({children, isActivated} : {children: ReactElement, isActivated: boolean}){
+    return(
+      (isActivated) ? (<Navigate to={'/'}/>) : (children)
+    )
+  }

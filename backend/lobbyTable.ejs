@@ -9,7 +9,7 @@
     <tr>
         <td><%=lobby.id%></td>
         <td><%=lobby.name%></td>
-        <td><%=lobby.users.length%></td>
+        <td><%=[...lobby.users.values()].length%></td>
         <td><%= new Date(lobby.createdAt).toLocaleString();%></td>
     </tr>
     <%});%>

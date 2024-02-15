@@ -11,7 +11,7 @@ import { DisconnectionAlert } from '../components/DisconnectionAlert/Disconnecti
 import Home from '../pages/Home';
 import PublicLobby from '../pages/PublicLobby';
 import PrivateLobby from '../pages/PrivateLobby';
-import { ProtectedRouteCurrentLobby, ProtectedRouteUsername } from '../components/ProtectedRoutes';
+import { ForceHomePath } from '../components/ProtectedRoutes';
 
 const backEndUrl = "http://localhost:3000"
 const socket = io(backEndUrl, {
@@ -23,6 +23,7 @@ function App() {
 
   const [currentLobby, setCurrentLobby] = useState<LobbyFrontType | undefined>(undefined)
   const navigate = useNavigate()
+  const [isActivated, setIsActivated] = useState(true)
 
   useEffect(() => {
 
@@ -32,9 +33,13 @@ function App() {
     function updateLobby(lobby: LobbyFrontType) {
       setCurrentLobby(lobby)
     }
-    function resNavigateToLobby(lobby: LobbyFrontType) {
+    function resNavigateToLobby(status: string, lobby: LobbyFrontType) {
+      if (status === 'success'){
       setCurrentLobby(lobby)
-      navigate('/play')
+      navigate('/play')}
+      else {
+        // TODO handle message error parsing status message
+      }
     }
 
     socket.onAny(logEventsForDebug)
@@ -63,13 +68,15 @@ function App() {
         <UserContextProvider>
           <CurrentLobbyContext.Provider value={{ currentLobby: currentLobby, setCurrentLobby }}>
             <Routes>
-              <Route path='/' element={<Home />} />
-              <Route path='/publiclobby' element={<ProtectedRouteUsername><PublicLobby /></ProtectedRouteUsername>} />
-              <Route path='/privatelobby' element={<ProtectedRouteUsername><PrivateLobby /></ProtectedRouteUsername>} />
-              <Route path='/play' element={
-                <ProtectedRouteCurrentLobby><CurrentLobby /></ProtectedRouteCurrentLobby>
-              } />
-              <Route path='*' element={<h1>Page not found... Breath and chill</h1>} />
+              <Route path='/' element={<Home setIsActivated={setIsActivated}/>} errorElement={<h1>Oops... An error occured somewhere</h1>} />
+              <Route path='*' element={
+                <ForceHomePath isActivated={isActivated}>
+                  <Routes>
+                    <Route path='/publiclobby' element={<PublicLobby />} />
+                    <Route path='/privatelobby' element={<PrivateLobby />} />
+                    <Route path='/play' element={<CurrentLobby />}/>
+                  </Routes>
+                </ForceHomePath>} />
             </Routes>
           </CurrentLobbyContext.Provider>
         </UserContextProvider>

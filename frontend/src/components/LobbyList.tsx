@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import LobbyToJoin from './LobbyToJoin'
 import { LobbyFrontType } from '../types'
 import LobbyToCreate from './LobbyToCreate'
-import { useCurrentLobbyContext } from './CurrentLobbyContext'
 import { useSocketContext } from './SocketContext'
 
 
 export default function LobbyList() {
     const [lobbyList, setLobbyList] = useState<LobbyFrontType[]>([])
     const { socket } = useSocketContext()
-    const navigate = useNavigate()
-    const { setCurrentLobby } = useCurrentLobbyContext()
+
 
     useEffect(() => {
 
@@ -23,21 +20,15 @@ export default function LobbyList() {
             setLobbyList(lobbyList)
         }
 
-        function navToCurrentLobby(lobby: LobbyFrontType){
-            setCurrentLobby(lobby)
-            navigate('/play')
-        }
+        socket.on('update-lobbylist-setall', updateSetLobbyList)
+        socket.on('update-lobbylist-addlobby', updateCreateLobby)
 
-        socket.on('res-set-lobbylist', updateSetLobbyList)
-        socket.on('res-create-lobby', updateCreateLobby)
-        socket.on('ack-lobby-created', navToCurrentLobby)
 
         return () => {
-            socket.off('res-set-lobbylist', updateSetLobbyList)
-            socket.off('res-create-lobby', updateCreateLobby)
-            socket.off('ack-lobby-created', navToCurrentLobby)
+            socket.off('update-lobbylist-setall', updateSetLobbyList)
+            socket.off('update-lobbylist-addlobby', updateCreateLobby)
         }
-    }, [socket, navigate, setCurrentLobby])
+    }, [socket])
 
 
     return (

@@ -1,4 +1,4 @@
-import { LobbyBackType, LobbyFrontType, UserBackType } from "./types"
+import { LobbyBackType, LobbyFrontType, UserBackType, UserFrontType } from "./types"
 import logger from "./logger"
 import { randomUUID } from "crypto"
 
@@ -20,6 +20,10 @@ export class InMemoryLobbiesStore {
         return this.lobbies.get(id)
     }
 
+    getAllLobbies() {
+        return [...this.lobbies.values()]
+    }
+
     getLobbyForFront(id: string | undefined){
         const lobby = this.getLobby(id)
         if (lobby !== undefined){
@@ -33,13 +37,38 @@ export class InMemoryLobbiesStore {
         }
     }
 
+    getAllLobbiesForFront() {
+        const lobbies = this.getAllLobbies()
+        const lobbiesForFront: LobbyFrontType[] = []
+        lobbies.forEach(lobby => {
+            const usersForFront: UserFrontType[] = []
+            lobby.users.forEach(user => {
+                usersForFront.push({
+                    userId: user.userId,
+                    lobbyId: user.lobbyId,
+                    imageName: user.imageName,
+                    username: user.username
+                })
+            }) 
+            lobbiesForFront.push({
+                id: lobby.id,
+                name: lobby.name,
+                isPublic: lobby.isPublic,
+                users: usersForFront
+            })
+        })
+        return lobbiesForFront
+    }
+
     saveLobby(session: UserBackType, lobbyName: LobbyFrontType['name'], isPublic: LobbyFrontType['isPublic']) {
+        const users = new Map<UserBackType['sessionId'], UserBackType>()
+        users.set(session.sessionId, session)
         const newBackLobby: LobbyBackType = {
             id: randomUUID(),
             name: lobbyName,
             isPublic: isPublic,
             createdAt: Date.now(),
-            users: new Map<UserBackType['sessionId'], UserBackType>().set(session.sessionId, session)}
+            users: users}
         this.lobbies.set(newBackLobby.id, newBackLobby)
         return newBackLobby.id
     }
@@ -51,10 +80,6 @@ export class InMemoryLobbiesStore {
 
     deleteLobby(lobbyId: LobbyBackType['id']){
         this.lobbies.delete(lobbyId)
-    }
-
-    findAllLobbies() {
-        return [...this.lobbies.values()]
     }
 
     isUserInLobby(sessionId: UserBackType['sessionId'],lobby: LobbyBackType){
@@ -69,10 +94,6 @@ export class InMemoryLobbiesStore {
         if (lobby === undefined) {
             logger.undefinedLobby(lobbyId)
         } 
-        else if (this.isUserInLobby(user.sessionId, lobby)){
-            logger.userAlreadyInLobby(user.sessionId, lobbyId)
-            return
-        }
         else {
             lobby.users.set(user.sessionId, user)
             user.lobbyId = lobbyId
@@ -92,6 +113,7 @@ export class InMemoryLobbiesStore {
         }
         else {
             lobby.users.delete(user.sessionId)
+            logger.removedUserFromLobby(user.sessionId, lobbyId)
             user.lobbyId = undefined
         }
         return lobby

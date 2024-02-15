@@ -27,7 +27,6 @@ class MainLogger {
   constructor(logger: winston.Logger){
     this.logger = logger
   }
-  DEVmodeWarnString = 'If DEV mode, might be due to second re-effect (ignore if it is the case).'
 
   
   backendRunning(port: number){
@@ -72,21 +71,24 @@ class MainLogger {
   }
 
   addUserToLobby(sessionId: UserBackType['sessionId'], lobbyId: LobbyBackType['id']){
-    this.logger.debug(`Called addUserToLobby function | userId: ${sessionId} | lobbyId: ${lobbyId}`)
+    this.logger.debug(`Called addUserToLobby function | sessionId: ${sessionId} | lobbyId: ${lobbyId}`)
   }
   removeUserFromLobby(sessionId: UserBackType['sessionId'], lobbyId: LobbyBackType['id']){
-    this.logger.debug(`Called removeUserFromLobby function | userId: ${sessionId} | lobbyId: ${lobbyId}`)
+    this.logger.debug(`Called removeUserFromLobby function | sessionId: ${sessionId} | lobbyId: ${lobbyId}`)
+  }
+  removedUserFromLobby(sessionId: UserBackType['sessionId'], lobbyId: LobbyBackType['id']){
+    this.logger.debug(`User with sessionId "${sessionId}" has been removed from lobby with id "${lobbyId}"`)
   }
 
   // Warnings
   userAlreadyInLobby(sessionId: UserBackType['sessionId'], lobbyId: LobbyBackType['id']){
-    this.logger.warn(`User with sessionId "${sessionId}" already in lobby with id "${lobbyId}". ${this.DEVmodeWarnString}`)
+    this.logger.warn(`User with sessionId "${sessionId}" already in lobby with id "${lobbyId}".`)
   }
   userNotInLobby(sessionId: UserBackType['sessionId'], lobbyId: LobbyBackType['id']){
-    this.logger.warn(`User with sessionId "${sessionId}" not in lobby with id "${lobbyId}". ${this.DEVmodeWarnString}`)
+    this.logger.warn(`User with sessionId "${sessionId}" not in lobby with id "${lobbyId}".`)
   }
   undefinedLobby(lobbyId: LobbyBackType['id']| undefined){
-    this.logger.warn(`Lobby with id "${lobbyId}" is undefined in lobbyList. ${this.DEVmodeWarnString}`)
+    this.logger.warn(`Lobby with id "${lobbyId}" is undefined in lobbyList.`)
   }
   undefinedLobbyId(){
     this.logger.error('LobbyId is undefined!')

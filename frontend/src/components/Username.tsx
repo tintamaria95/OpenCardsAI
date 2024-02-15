@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from "react"
+import { ChangeEvent, FormEvent, useState } from "react"
 import { useSocketContext } from "./SocketContext"
 import { useUserContext } from "./UserContext"
 
@@ -8,10 +8,6 @@ export function Username() {
   const {username, setUsername} = useUserContext()
   const [isModifying, setIsModifying] = useState(false)
   const {socket} = useSocketContext()
-
-  useEffect(() => {
-    socket.auth = {...socket.auth, username : username}
-  }, [socket])
 
   function handleChange(e: ChangeEvent<HTMLInputElement>){
     setUsername(e.target.value)
@@ -24,7 +20,6 @@ export function Username() {
 
   function handleSubmitValidate(e: FormEvent){
     e.preventDefault()
-    socket.auth = {...socket.auth, username : username}
     localStorage.setItem('username', username)
     socket.emit('update-username', username)
     setIsModifying(false)

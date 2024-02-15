@@ -8,7 +8,7 @@ export default function CurrentLobby() {
     const { socket } = useSocketContext()
     
     function handleLeaveLobby(){
-        socket.emit('leave-lobby')
+        socket.emit('left-lobby')
         setCurrentLobby(undefined)
     }
 
