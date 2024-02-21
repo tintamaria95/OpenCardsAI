@@ -1,29 +1,56 @@
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, createBrowserRouter, RouterProvider, Outlet  } from 'react-router-dom'
 import io from 'socket.io-client';
 import './App.css'
-import CurrentLobby from '../pages/CurrentLobby';
 import { useEffect, useState } from 'react';
 import { LobbyFrontType } from '../types';
 import { CurrentLobbyContext } from '../components/CurrentLobbyContext';
 import { UserContextProvider } from '../components/UserContextProvider';
 import { SocketContext } from '../components/SocketContext';
 import { DisconnectionAlert } from '../components/DisconnectionAlert/DisconnectionAlert';
+import CurrentLobby from '../pages/CurrentLobby';
 import Home from '../pages/Home';
 import PublicLobby from '../pages/PublicLobby';
 import PrivateLobby from '../pages/PrivateLobby';
-import { ForceHomePath } from '../components/ProtectedRoutes';
 
 const backEndUrl = "http://localhost:3000"
 const socket = io(backEndUrl, {
   autoConnect: false
 })
 
+const router = createBrowserRouter([
+  {path:'*', Component:Root}
+])
 
-function App() {
+function Menu(){
+  useEffect(() =>{
+    socket.emit('join-menu')
+  }, [socket])
+  return <Outlet/>
+}
+
+function Root(){
+  return (
+    <Routes>
+      <Route element={<AppLogic />}>
+        <Route element={<Menu />}>
+          <Route path='/' element={<Home />} />
+          <Route path='/publiclobby' element={<PublicLobby />} />
+          <Route path='/privatelobby' element={<PrivateLobby />} />
+        </Route>
+        <Route path='/play' element={<CurrentLobby />} />
+      </Route>
+    </Routes>
+  )
+}
+
+function App(){
+  return <RouterProvider router={router}/>
+}
+
+function AppLogic() {
 
   const [currentLobby, setCurrentLobby] = useState<LobbyFrontType | undefined>(undefined)
   const navigate = useNavigate()
-  const [isActivated, setIsActivated] = useState(true)
 
   useEffect(() => {
 
@@ -34,20 +61,18 @@ function App() {
       setCurrentLobby(lobby)
     }
     function resNavigateToLobby(status: string, lobby: LobbyFrontType) {
-      if (status === 'success'){
-      setCurrentLobby(lobby)
-      navigate('/play')}
-      else {
-        // TODO handle message error parsing status message
+      if (status === 'success') {
+        setCurrentLobby(lobby)
+        navigate('/play')
       }
     }
-
+    
     socket.onAny(logEventsForDebug)
     socket.on('res-join-lobby', resNavigateToLobby)
-    socket.on('update-currentlobby', updateLobby)
+    socket.on('update-lobby', updateLobby)
     return () => {
       socket.offAny(logEventsForDebug)
-      socket.off('update-currentlobby', updateLobby)
+      socket.off('update-lobby', updateLobby)
       socket.off('res-join-lobby', resNavigateToLobby)
     }
   }, [socket])
@@ -67,17 +92,7 @@ function App() {
         <DisconnectionAlert />
         <UserContextProvider>
           <CurrentLobbyContext.Provider value={{ currentLobby: currentLobby, setCurrentLobby }}>
-            <Routes>
-              <Route path='/' element={<Home setIsActivated={setIsActivated}/>} errorElement={<h1>Oops... An error occured somewhere</h1>} />
-              <Route path='*' element={
-                <ForceHomePath isActivated={isActivated}>
-                  <Routes>
-                    <Route path='/publiclobby' element={<PublicLobby />} />
-                    <Route path='/privatelobby' element={<PrivateLobby />} />
-                    <Route path='/play' element={<CurrentLobby />}/>
-                  </Routes>
-                </ForceHomePath>} />
-            </Routes>
+            <Outlet/>
           </CurrentLobbyContext.Provider>
         </UserContextProvider>
       </SocketContext.Provider>

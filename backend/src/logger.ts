@@ -91,7 +91,7 @@ class MainLogger {
     this.logger.warn(`Lobby with id "${lobbyId}" is undefined in lobbyList.`)
   }
   undefinedLobbyId(){
-    this.logger.error('LobbyId is undefined!')
+    this.logger.warn('LobbyId is undefined.')
   }
 
   // Errors

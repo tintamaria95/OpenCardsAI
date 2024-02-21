@@ -1,16 +1,16 @@
 import { createContext, useContext } from "react"
 
 type UserContent = {
-    sessionId: string,
-    setSessionId: (sessionId: string) => void,
+    sessionId: string | undefined,
+    setSessionId: (sessionId: string | undefined) => void,
     userId: string,
     setUserId: (userId: string) => void,
     username: string,
     setUsername: (username: string) => void
     imageName: string,
     setImageName: (imageName: string) => void,
-    lobbyId: string,
-    setLobbyId: (lobbyId: string) => void
+    lobbyId: string | undefined,
+    setLobbyId: (lobbyId: string | undefined) => void
 }
 
 export const UserContext = createContext<UserContent>({

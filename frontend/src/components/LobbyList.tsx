@@ -23,6 +23,7 @@ export default function LobbyList() {
         socket.on('update-lobbylist-setall', updateSetLobbyList)
         socket.on('update-lobbylist-addlobby', updateCreateLobby)
 
+        socket.emit('req-lobbylist')
 
         return () => {
             socket.off('update-lobbylist-setall', updateSetLobbyList)

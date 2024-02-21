@@ -104,16 +104,23 @@ io.on('connection', async (socket) => {
     logger.userUpdatedUsername(sessionId, username)
   })
 
-  socket.on('join-publiclobby', async () => {
-    await socket.join(ROOMPUBLICLOBBY)
-    io.to(socket.id).emit('update-lobbylist-setall', publicLobbyStore.getAllLobbiesForFront())
+  socket.on('join-menu', async () => {
+    if (session.lobbyId !== undefined){
+      handleUserLeftLobby(io, socket, publicLobbyStore, privateLobbyStore, session)
+    }
   })
 
+  socket.on('join-publiclobby', async () => {
+    await socket.join(ROOMPUBLICLOBBY)
+  })
 
   socket.on('left-publiclobby', async () => {
     await socket.leave(ROOMPUBLICLOBBY)
   })
 
+  socket.on('req-lobbylist', async () => {
+    io.to(socket.id).emit('update-lobbylist-setall', publicLobbyStore.getAllLobbiesForFront())
+  })
 
   socket.on('req-create-lobby', async (lobbyName: string, isPublic: boolean) => {
     if (isPublic) {
@@ -128,11 +135,11 @@ io.on('connection', async (socket) => {
     } else {
       const lobbyId = privateLobbyStore.saveLobby(session, lobbyName, isPublic)
       session.lobbyId = lobbyId
-      const lobby = privateLobbyStore.getLobbyForFront(lobbyId)
+      const lobbyForFront = privateLobbyStore.getLobbyForFront(lobbyId)
       await socket.leave(ROOMPUBLICLOBBY)
       await socket.join(lobbyId)
 
-      io.to(lobbyId).emit('res-join-lobby', 'success', lobby)
+      io.to(lobbyId).emit('res-join-lobby', 'success', lobbyForFront)
     }
   })
 
@@ -154,35 +161,27 @@ io.on('connection', async (socket) => {
       io.to(socket.id).emit('res-join-lobby', 'undefinedLobby', undefined)
     }
   })
-    
-  socket.on('left-lobby', async () => {
+
+  socket.on('req-update-lobby', async () => {
     if (session.lobbyId !== undefined) {
-      if (publicLobbyStore.getLobby(session.lobbyId) !== undefined) {
-        await socket.leave(session.lobbyId)
-        handleUserLeftLobby(io, publicLobbyStore, session.lobbyId, session)
-      }
-      else if (privateLobbyStore.getLobby(session.lobbyId) !== undefined) {
-        await socket.leave(session.lobbyId)
-        handleUserLeftLobby(io, privateLobbyStore, session.lobbyId, session)
-      } else {
-        logger.undefinedLobby(session.lobbyId)
+      if (publicLobbyStore.getLobby(session.lobbyId) !== undefined){
+      io.to(session.lobbyId).emit('update-lobby', publicLobbyStore.getLobbyForFront(session.lobbyId))}
+      else if (privateLobbyStore.getLobby(session.lobbyId) !== undefined){
+        io.to(session.lobbyId).emit('update-lobby', privateLobbyStore.getLobbyForFront(session.lobbyId))}
+      else{
+        logger.logger.error('sessionId !== undefined but unknown in both public and private stores.')
       }
     }
-    await socket.join(ROOMPUBLICLOBBY)
-  }
-  )
-
-
-  socket.on('disconnect', async () => {
-    logger.userDisconnected(sessionId)
-    if (session.lobbyId !== undefined) {
-      await socket.leave(session.lobbyId)
-      handleUserLeftLobby(io, publicLobbyStore, session.lobbyId, session)
+    else {
+      io.to(socket.id).emit('update-lobby', undefined)
     }
   })
+
+  socket.on('disconnect', () => { 
+    logger.userDisconnected(sessionId)
+    handleUserLeftLobby(io, socket, publicLobbyStore, privateLobbyStore, session) })
+
 })
-
-
 
 httpServer.listen(PORT, () => {
   logger.backendRunning(PORT)

@@ -8,7 +8,6 @@ export default function LobbyToJoin({id, name, users }: LobbyFrontType) {
         socket.emit('req-join-lobby', id)
     }
 
-
     return (
         <>
             <div>Lobby name: {name}</div>

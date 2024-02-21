@@ -20,8 +20,8 @@ export function Username() {
 
   function handleSubmitValidate(e: FormEvent){
     e.preventDefault()
-    localStorage.setItem('username', username)
     socket.emit('update-username', username)
+    localStorage.setItem('username', username)
     setIsModifying(false)
   }
 

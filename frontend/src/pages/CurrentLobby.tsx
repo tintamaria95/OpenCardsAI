@@ -1,32 +1,52 @@
 import { useCurrentLobbyContext } from "../components/CurrentLobbyContext"
 import { Link } from "react-router-dom"
 import { useSocketContext } from "../components/SocketContext"
-
+import { Navigate } from "react-router-dom"
+import { useEffect } from "react"
 
 export default function CurrentLobby() {
-    const { currentLobby, setCurrentLobby } = useCurrentLobbyContext()
+    const { currentLobby } = useCurrentLobbyContext()
     const { socket } = useSocketContext()
-    
-    function handleLeaveLobby(){
-        socket.emit('left-lobby')
-        setCurrentLobby(undefined)
-    }
+
+    useEffect(()=>{
+        // In case of navigation using 
+        socket.emit('req-update-lobby')
+    }, [socket])
 
     return (
-        <>
-        <h1>In Lobby</h1>
-        {(currentLobby == undefined) ? (
-            <div>Error: currentLobby var is undefined.</div>
-        ) : (<> 
-        <div></div>
-        {(currentLobby.users.length > 0) ? (
-            currentLobby.users.map((user, index) => (
-                <li key={index}>{user.username}</li>
-            ))
-        ) : (
-            <div>No player found... There might be an error somewhere</div>)}
-        </>)}
-        <Link to={'/'} onClick={handleLeaveLobby}>retour</Link>
-    </>
+        (currentLobby == undefined) ?
+            (
+                <Navigate to={'/'} replace />
+            ) : (
+                <>
+                    <h1>{currentLobby.name}</h1>
+                    {(currentLobby.isPublic) ? (<div>- lobby public -</div>) : (<div>- lobby privé -</div>)}
+                    <section>
+                        <h3>Joueurs dans le lobby:</h3>
+                        <ul>
+                            {(currentLobby.users.length > 0) ? (
+                                currentLobby.users.map((user, index) => (
+                                    <li key={index}>{user.username}</li>
+                                ))
+                            ) : (
+                                <div>No player found... There might be an error somewhere</div>)}
+                        </ul>
+                    </section>
+                    <section>
+                        <h3>Messages</h3>
+                        <ul>
+                            {/* {(currentLobby.users.length > 0) ? (
+                                currentLobby.users.map((user, index) => (
+                                    <li key={index}>{user.username}</li>
+                                ))
+                            ) : (
+                                <div>No player found... There might be an error somewhere</div>)} */}
+                        </ul>
+                    </section>
+
+
+                    <Link to={'/'} >retour</Link>
+                </>)
+
     )
 }
