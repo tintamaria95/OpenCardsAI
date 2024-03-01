@@ -1,8 +1,9 @@
-import { LobbyBackType, LobbyStore, UserBackType } from "./types";
+import { LobbyBackType, UserBackType } from "./types";
 import { Socket } from 'socket.io'
 import { Server } from "socket.io";
 import { InMemoryLobbiesStore } from "./lobbyStore";
 import logger from "./logger";
+import { InMemorySessionsStore } from "./sessionStore";
 
 export const ROOMPUBLICLOBBY = 'publiclobby'
 
@@ -36,17 +37,13 @@ export function handleRemoveUserFromLobby(io: Server, lobbyStore: InMemoryLobbie
 }
 
 
-export async function handleUserLeftLobby(io: Server, socket: Socket, publicLobbyStore: InMemoryLobbiesStore, privateLobbyStore: InMemoryLobbiesStore, user: UserBackType) {
-    if (user.lobbyId !== undefined) {
-        if (publicLobbyStore.getLobby(user.lobbyId) !== undefined) {
-            await socket.leave(user.lobbyId)
-            handleRemoveUserFromLobby(io, publicLobbyStore, user.lobbyId, user)
-        }
-        else if (privateLobbyStore.getLobby(user.lobbyId) !== undefined) {
-            await socket.leave(user.lobbyId)
-            handleRemoveUserFromLobby(io, privateLobbyStore, user.lobbyId, user)
-        } else {
-            logger.undefinedLobby(user.lobbyId)
+export async function handleUserLeftLobby(io: Server, socket: Socket, lobbyStore: InMemoryLobbiesStore, session: UserBackType, sessionStore: InMemorySessionsStore) {
+    if (session.lobbyId !== undefined) {
+        if (lobbyStore.getLobby(session.lobbyId) !== undefined) {
+            await socket.leave(session.lobbyId)
+            handleRemoveUserFromLobby(io, lobbyStore, session.lobbyId, session)
         }
     }
-}
+    session.lobbyId = undefined
+    sessionStore.saveSession(session.sessionId, { ...session, lobbyId: undefined })
+    }

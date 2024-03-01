@@ -21,11 +21,11 @@ const router = createBrowserRouter([
   {path:'*', Component:Root}
 ])
 
-function Menu(){
-  useEffect(() =>{
+function Menu() {
+  useEffect(() => {
     socket.emit('join-menu')
-  }, [socket])
-  return <Outlet/>
+  }, [])
+  return <Outlet />
 }
 
 function Root(){
@@ -75,7 +75,7 @@ function AppLogic() {
       socket.off('update-lobby', updateLobby)
       socket.off('res-join-lobby', resNavigateToLobby)
     }
-  }, [socket])
+  }, [navigate])
 
   useEffect(() => {
     if (!socket.connected) {
@@ -83,7 +83,7 @@ function AppLogic() {
       socket.auth = { sessionId: sessionId }
       socket.connect()
     }
-  }, [socket])
+  }, [])
 
 
   return (

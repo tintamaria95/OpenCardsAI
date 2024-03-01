@@ -4,8 +4,8 @@ import bodyParser from 'body-parser'
 import * as socketio from 'socket.io'
 import * as path from 'path'
 import logger from './logger'
-import { LobbyBackType, LobbyFrontType, UserBackType } from './types'
-import { handleUserJoinsLobby, ROOMPUBLICLOBBY, handleUserLeftLobby } from './handleLobbyChanges'
+import { LobbyBackType } from './types'
+import { ROOMPUBLICLOBBY, handleUserLeftLobby } from './handleLobbyChanges'
 import * as cors from 'cors'
 import { InMemorySessionsStore } from './sessionStore'
 import { randomUUID } from 'crypto'
@@ -40,13 +40,12 @@ app.set('view engine', 'ejs')
 // users sessions
 const sessionStore = new InMemorySessionsStore()
 // Lobby list in RAM
-const publicLobbyStore = new InMemoryLobbiesStore()
-const privateLobbyStore = new InMemoryLobbiesStore()
+const lobbyStore = new InMemoryLobbiesStore()
 
 app.get('/', (req: Request, res: Response) => {
   res.render(path.join(__dirname, '../index.ejs'), {
-    public: publicLobbyStore.getAllLobbies(),
-    private: privateLobbyStore.getAllLobbies(),
+    public: lobbyStore.getAllLobbies(true),
+    private: lobbyStore.getAllLobbies(false),
     sessions: sessionStore.findAllSessions()
   })
 })
@@ -82,7 +81,7 @@ io.use((socket, next) => {
   } next()
 })
 
-io.on('connection', async (socket) => {
+io.on('connection', (socket) => {
 
   socket.onAny((event) => { console.log(`got ${event}`) })
 
@@ -98,7 +97,7 @@ io.on('connection', async (socket) => {
 
   logger.userConnected(sessionId)
 
-  socket.on('update-username', (username: string) => {
+  socket.on('update-username',(username: string) => {
     session.username = username
     sessionStore.saveSession(sessionId, { ...session, username: username })
     logger.userUpdatedUsername(sessionId, username)
@@ -106,7 +105,7 @@ io.on('connection', async (socket) => {
 
   socket.on('join-menu', async () => {
     if (session.lobbyId !== undefined){
-      handleUserLeftLobby(io, socket, publicLobbyStore, privateLobbyStore, session)
+      await handleUserLeftLobby(io, socket, lobbyStore, session, sessionStore)
     }
   })
 
@@ -118,43 +117,34 @@ io.on('connection', async (socket) => {
     await socket.leave(ROOMPUBLICLOBBY)
   })
 
-  socket.on('req-lobbylist', async () => {
-    io.to(socket.id).emit('update-lobbylist-setall', publicLobbyStore.getAllLobbiesForFront())
+  socket.on('req-lobbylist', () => {
+    io.to(socket.id).emit('update-lobbylist-setall', lobbyStore.getAllLobbiesForFront(true))
   })
 
   socket.on('req-create-lobby', async (lobbyName: string, isPublic: boolean) => {
-    if (isPublic) {
-      const lobbyId = publicLobbyStore.saveLobby(session, lobbyName, isPublic)
+      const lobbyId = lobbyStore.saveLobby(session, lobbyName, isPublic)
       session.lobbyId = lobbyId
-      const lobbyForFront = publicLobbyStore.getLobbyForFront(lobbyId)
+      const lobbyForFront = lobbyStore.getLobbyForFront(lobbyId)
       await socket.leave(ROOMPUBLICLOBBY)
       await socket.join(lobbyId)
 
       io.to(lobbyId).emit('res-join-lobby', 'success', lobbyForFront)
-      io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-addlobby', lobbyForFront)
-    } else {
-      const lobbyId = privateLobbyStore.saveLobby(session, lobbyName, isPublic)
-      session.lobbyId = lobbyId
-      const lobbyForFront = privateLobbyStore.getLobbyForFront(lobbyId)
-      await socket.leave(ROOMPUBLICLOBBY)
-      await socket.join(lobbyId)
-
-      io.to(lobbyId).emit('res-join-lobby', 'success', lobbyForFront)
-    }
+      if (isPublic){
+      io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-addlobby', lobbyForFront)}
   })
 
   socket.on('req-join-lobby', async (lobbyId: LobbyBackType['id']) => {
-    const lobby = publicLobbyStore.getLobby(lobbyId)
+    const lobby = lobbyStore.getLobby(lobbyId)
     if (lobby !== undefined) {
-      if (publicLobbyStore.isUserInLobby(sessionId, lobby)) {
+      if (lobbyStore.isUserInLobby(sessionId, lobby)) {
         logger.userAlreadyInLobby(sessionId, lobbyId)
-        io.to(lobbyId).emit('res-join-lobby', 'userAlreadyInLobby', publicLobbyStore.getLobbyForFront(lobbyId))
+        io.to(lobbyId).emit('res-join-lobby', 'userAlreadyInLobby', lobbyStore.getLobbyForFront(lobbyId))
       } else {
-        publicLobbyStore.addUserToLobby(session, lobbyId)
+        lobbyStore.addUserToLobby(session, lobbyId)
         await socket.leave(ROOMPUBLICLOBBY)
         await socket.join(lobbyId)
         session.lobbyId = lobbyId
-        io.to(lobbyId).emit('res-join-lobby', 'success', publicLobbyStore.getLobbyForFront(lobbyId))
+        io.to(lobbyId).emit('res-join-lobby', 'success', lobbyStore.getLobbyForFront(lobbyId))
       }
     } else {
       logger.undefinedLobby(lobbyId)
@@ -162,12 +152,10 @@ io.on('connection', async (socket) => {
     }
   })
 
-  socket.on('req-update-lobby', async () => {
+  socket.on('req-update-lobby', () => {
     if (session.lobbyId !== undefined) {
-      if (publicLobbyStore.getLobby(session.lobbyId) !== undefined){
-      io.to(session.lobbyId).emit('update-lobby', publicLobbyStore.getLobbyForFront(session.lobbyId))}
-      else if (privateLobbyStore.getLobby(session.lobbyId) !== undefined){
-        io.to(session.lobbyId).emit('update-lobby', privateLobbyStore.getLobbyForFront(session.lobbyId))}
+      if (lobbyStore.getLobby(session.lobbyId) !== undefined){
+      io.to(session.lobbyId).emit('update-lobby', lobbyStore.getLobbyForFront(session.lobbyId))}
       else{
         logger.logger.error('sessionId !== undefined but unknown in both public and private stores.')
       }
@@ -177,9 +165,9 @@ io.on('connection', async (socket) => {
     }
   })
 
-  socket.on('disconnect', () => { 
+  socket.on('disconnect', async () => { 
     logger.userDisconnected(sessionId)
-    handleUserLeftLobby(io, socket, publicLobbyStore, privateLobbyStore, session) })
+    await handleUserLeftLobby(io, socket, lobbyStore, session, sessionStore) })
 
 })
 

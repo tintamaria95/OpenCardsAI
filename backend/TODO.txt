@@ -1,2 +1,2 @@
--> possibilité d'avoir même user dans plusieurs lobbies mais pas possible d'avoir même user dans même lobby
--> users connectés via sessionId récupéré dans localStorage
+-> error/warn si user veut se co dans le même lobby avec deux fois même sessionId
+-> refacto pour alléger la recherche de lobby : même Map pour public et private ?

@@ -20,7 +20,8 @@ export default function CurrentLobby() {
             ) : (
                 <>
                     <h1>{currentLobby.name}</h1>
-                    {(currentLobby.isPublic) ? (<div>- lobby public -</div>) : (<div>- lobby privé -</div>)}
+                    {(currentLobby.isPublic) ? (<div>- Public -</div>) : (<div>- Private -</div>)}
+                    {(currentLobby.isPublic) ? (<div></div>) : (<div><b>Invitation code: {currentLobby.id}</b></div>)}
                     <section>
                         <h3>Joueurs dans le lobby:</h3>
                         <ul>

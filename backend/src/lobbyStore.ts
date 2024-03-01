@@ -13,15 +13,17 @@ export class InMemoryLobbiesStore {
     }
 
     getLobby(id: string | undefined) {
-        if (id === undefined){
-            logger.undefinedLobbyId()
-            return undefined
+        if (id !== undefined){
+            return this.lobbies.get(id)
         }
-        return this.lobbies.get(id)
     }
 
-    getAllLobbies() {
-        return [...this.lobbies.values()]
+    getAllLobbies(isPublic?: boolean) {
+        const lobbies = [...this.lobbies.values()]
+        if (isPublic !== undefined){
+            return lobbies.filter(lobby => lobby.isPublic == isPublic)
+        }
+        return lobbies
     }
 
     getLobbyForFront(id: string | undefined){
@@ -37,8 +39,8 @@ export class InMemoryLobbiesStore {
         }
     }
 
-    getAllLobbiesForFront() {
-        const lobbies = this.getAllLobbies()
+    getAllLobbiesForFront(isPublic?: boolean) {
+        const lobbies = this.getAllLobbies(isPublic)  
         const lobbiesForFront: LobbyFrontType[] = []
         lobbies.forEach(lobby => {
             const usersForFront: UserFrontType[] = []
