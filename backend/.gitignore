@@ -3,10 +3,6 @@ dist
 build
 .env
 
-# prisma files
-prisma/*
-!prisma/schema.prisma
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

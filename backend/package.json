@@ -4,7 +4,7 @@
   "description": "",
   "main": "./build/index.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node ./src/index.ts",
+    "dev": "nodemon --exec ts-node ./src/games/skullKing.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --config .prettierrc --write 'src/**/*.{ts,tsx}'",
     "build": "tsc",
@@ -12,15 +12,15 @@
   },
   "author": "martin le digabel",
   "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
-    "@types/validator": "^13.11.8",
     "body-parser": "^1.20.2",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.4.5",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
-    "reflect-metadata": "^0.2.1",
     "socket.io": "^4.7.3",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "typescript": "^5.4.2"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
@@ -31,7 +31,6 @@
     "nodemon": "^3.0.2",
     "prettier": "^3.1.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.2.2",
     "vite": "^5.0.8"
   }
 }

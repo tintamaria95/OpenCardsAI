@@ -3,7 +3,7 @@ import { createServer } from 'http'
 import bodyParser from 'body-parser'
 import * as socketio from 'socket.io'
 import * as path from 'path'
-import logger from './logger'
+import lobbyLogger from './logger'
 import { LobbyBackType } from './types'
 import { ROOMPUBLICLOBBY, handleUserLeftLobby } from './handleLobbyChanges'
 import * as cors from 'cors'
@@ -18,12 +18,12 @@ const app = express()
 const httpServer = createServer(app)
 const io = new socketio.Server(httpServer, {
   cors: {
-    origin: 'http://localhost:5173'
+    origin: 'http://localhost:8080'
   }
 })
 
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: "http://localhost:8080",
   methods: 'GET,POST,DELETE',
   credentials: true
 }
@@ -53,16 +53,16 @@ app.get('/', (req: Request, res: Response) => {
 io.use((socket, next) => {
   const isShowlog = false
   const sessionId = socket.handshake.auth.sessionId as string
-  if (isShowlog) { logger.showSessionId(sessionId) }
+  if (isShowlog) { lobbyLogger.showSessionId(sessionId) }
   if (sessionId) {
     const session = sessionStore.findSession(sessionId)
     if (session) {
       socket.handshake.auth.sessionId = sessionId
-      if (isShowlog) { logger.confirmSessionIdInSessionStore(session.userId, session.username) }
+      if (isShowlog) { lobbyLogger.confirmSessionIdInSessionStore(session.userId, session.username) }
       return next()
     }
   }
-  if (isShowlog) { logger.denySessionIdInSessionStore() }
+  if (isShowlog) { lobbyLogger.denySessionIdInSessionStore() }
   const newSessionId = randomUUID()
   const newUserId = randomUUID()
   const username = 'User' + Math.floor(Math.random() * 1000).toString()
@@ -77,7 +77,7 @@ io.use((socket, next) => {
     createdAt: Date.now()
   })
   if (isShowlog) {
-    logger.createdNewSession(newSessionId, newUserId, username)
+    lobbyLogger.createdNewSession(newSessionId, newUserId, username)
   } next()
 })
 
@@ -88,19 +88,19 @@ io.on('connection', (socket) => {
   const sessionId = socket.handshake.auth.sessionId as string
   const session = sessionStore.findSession(sessionId)
   if (!session) {
-    logger.sessionNotFound(sessionId)
+    lobbyLogger.sessionNotFound(sessionId)
     return Error('Session not found')
   }
 
   // socket.join(session.userId)
   io.to(socket.id).emit('session', session)
 
-  logger.userConnected(sessionId)
+  lobbyLogger.userConnected(sessionId)
 
   socket.on('update-username',(username: string) => {
     session.username = username
     sessionStore.saveSession(sessionId, { ...session, username: username })
-    logger.userUpdatedUsername(sessionId, username)
+    lobbyLogger.userUpdatedUsername(sessionId, username)
   })
 
   socket.on('join-menu', async () => {
@@ -137,7 +137,7 @@ io.on('connection', (socket) => {
     const lobby = lobbyStore.getLobby(lobbyId)
     if (lobby !== undefined) {
       if (lobbyStore.isUserInLobby(sessionId, lobby)) {
-        logger.userAlreadyInLobby(sessionId, lobbyId)
+        lobbyLogger.userAlreadyInLobby(sessionId, lobbyId)
         io.to(lobbyId).emit('res-join-lobby', 'userAlreadyInLobby', lobbyStore.getLobbyForFront(lobbyId))
       } else {
         lobbyStore.addUserToLobby(session, lobbyId)
@@ -147,7 +147,7 @@ io.on('connection', (socket) => {
         io.to(lobbyId).emit('res-join-lobby', 'success', lobbyStore.getLobbyForFront(lobbyId))
       }
     } else {
-      logger.undefinedLobby(lobbyId)
+      lobbyLogger.undefinedLobby(lobbyId)
       io.to(socket.id).emit('res-join-lobby', 'undefinedLobby', undefined)
     }
   })
@@ -157,7 +157,7 @@ io.on('connection', (socket) => {
       if (lobbyStore.getLobby(session.lobbyId) !== undefined){
       io.to(session.lobbyId).emit('update-lobby', lobbyStore.getLobbyForFront(session.lobbyId))}
       else{
-        logger.logger.error('sessionId !== undefined but unknown in both public and private stores.')
+        lobbyLogger.logger.error('sessionId !== undefined but unknown in both public and private stores.')
       }
     }
     else {
@@ -166,11 +166,11 @@ io.on('connection', (socket) => {
   })
 
   socket.on('disconnect', async () => { 
-    logger.userDisconnected(sessionId)
+    lobbyLogger.userDisconnected(sessionId)
     await handleUserLeftLobby(io, socket, lobbyStore, session, sessionStore) })
 
 })
 
 httpServer.listen(PORT, () => {
-  logger.backendRunning(PORT)
+  lobbyLogger.backendRunning(PORT)
 })

@@ -5,7 +5,7 @@ import { LobbyBackType, UserBackType } from './types'
 dotenv.config()
 
 const winstonLogger = winston.createLogger({
-  level: 'info',
+  level: 'debug',
   format: winston.format.json(),
   // transports: [
   //   new winston.transports.File({ filename: 'warn.log', level: 'warn' })
@@ -105,8 +105,6 @@ class MainLogger {
 }
 
 
+const lobbyLogger = new MainLogger(winstonLogger)
 
-
-const logger = new MainLogger(winstonLogger)
-
-export default logger
+export default lobbyLogger
