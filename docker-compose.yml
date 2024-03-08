@@ -2,12 +2,12 @@ services:
   frontend:
     build:
       context: ./frontend/
-    container_name: nginx-react-ocg
+    container_name: compose-nginx-react-ocg
     ports:
       - "8080:8080"
   backend:
     build:
       context: ./backend/
-    container_name: backend-ocg
+    container_name: compose-backend-ocg
     ports:
       - "3000:3000"
