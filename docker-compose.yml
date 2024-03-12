@@ -1,15 +1,15 @@
 services:
   frontend:
     build:
-      context: ./frontend/
-    container_name: compose-nginx-react-ocg
+      context: /home/martinld/Documents/OpenCardsAI/frontend/
+    container_name: nginx-react-ocg
     ports:
-      - "8080:8080"
+      - "8080:80"
     volumes:
-      - ./frontend/.nginx:/etc/nginx/conf.d/
+      - /home/martinld/Documents/OpenCardsAI/frontend/.nginx:/etc/nginx/conf.d/
   backend:
     build:
-      context: ./backend/
-    container_name: compose-backend-ocg
+      context: /home/martinld/Documents/OpenCardsAI/backend/
+    container_name: backend-ocg
     ports:
       - "3000:3000"

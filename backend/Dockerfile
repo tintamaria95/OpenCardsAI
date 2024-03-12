@@ -12,4 +12,4 @@ RUN npx tsc -p .
 
 EXPOSE 3000
 
-CMD ["node", "/app/build/index.js"]
+CMD ["exec", "node", "/app/build/index.js"]
