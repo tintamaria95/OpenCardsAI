@@ -5,6 +5,8 @@ services:
     container_name: compose-nginx-react-ocg
     ports:
       - "8080:8080"
+    volumes:
+      - ./frontend/.nginx:/etc/nginx/conf.d/
   backend:
     build:
       context: ./backend/

@@ -16,17 +16,17 @@ const PORT = 3000
 const app = express()
 
 const httpServer = createServer(app)
-const allowedOrigins = [
-  "http://localhost:8080", "martinld.fr", /\b\w*\.martinld.fr\b/
-]
+
+const allowedOrigin = process.env.NODE_ENV == 'production' ? /\b\w*\.?martinld.fr\b/ : "http://localhost:8080"
+
 const io = new socketio.Server(httpServer, {
   cors: {
-    origin: allowedOrigins
+    origin: allowedOrigin
   }
 })
 
 const corsOptions = {
-  origin: allowedOrigins,
+  origin: allowedOrigin,
   methods: 'GET,POST,DELETE',
   credentials: true
 }
