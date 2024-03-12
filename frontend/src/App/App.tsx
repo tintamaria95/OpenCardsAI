@@ -12,13 +12,11 @@ import Home from '../pages/Home';
 import PublicLobby from '../pages/PublicLobby';
 import PrivateLobby from '../pages/PrivateLobby';
 
-const backEndUrl = process.env.API_URL == undefined ? "http://localhost:3000" : "api.ocg.martinld.fr"
-// const defaultApiUrl = "api.ocg.martinld.fr"
-// if (process.env.API_URL == undefined){
-//   console.log("Env variable API_URL is undefined. Set to ")
-// }
+if (process.env.API_URL == undefined){
+  process.env.API_URL = "http://localhost:3000"
+}
 
-const socket = io(backEndUrl, {
+const socket = io(process.env.API_URL, {
   autoConnect: false
 })
 
