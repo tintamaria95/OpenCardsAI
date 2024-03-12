@@ -4,7 +4,8 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci
+# "RUN npm ci" brings error, probably due to podman-compose network issue
+RUN npm i
 
 COPY . .
 
