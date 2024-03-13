@@ -11,6 +11,9 @@ import CurrentLobby from '../pages/CurrentLobby';
 import Home from '../pages/Home';
 import PublicLobby from '../pages/PublicLobby';
 import PrivateLobby from '../pages/PrivateLobby';
+import * as dotenv from 'dotenv'
+
+dotenv.config()
 
 if (process.env.API_URL == undefined){
   process.env.API_URL = "http://localhost:3000"
