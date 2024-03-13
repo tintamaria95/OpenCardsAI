@@ -36,7 +36,7 @@ fi
 echo "Running 2/2: OCG Frontend"
 if ! podman container ps | grep -q "frontend-ocg"; then
         if ! podman container list -a | grep -q "frontend-ocg";then
-                podman run -d --name frontend-ocg --publish 8080:80 -e REACT_APP_API_URL=api.ocg.martinld.fr -v ./frontend/.nginx:/etc/nginx/conf.d/ ocg-front:latest
+                podman run -d --name frontend-ocg --publish 8080:80 -v ./frontend/.nginx:/etc/nginx/conf.d/ ocg-front:latest
         else
                 podman container start frontend-ocg
         fi
