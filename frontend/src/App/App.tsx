@@ -12,11 +12,11 @@ import Home from '../pages/Home';
 import PublicLobby from '../pages/PublicLobby';
 import PrivateLobby from '../pages/PrivateLobby';
 
-if (process.env.API_URL == undefined){
-  process.env.API_URL = "http://localhost:3000"
+if (process.env.REACT_APP_API_URL == undefined){
+  process.env.REACT_APP_API_URL = "http://localhost:3000"
 }
 
-const socket = io(process.env.API_URL, {
+const socket = io(process.env.REACT_APP_API_URL, {
   autoConnect: false
 })
 
