@@ -11,13 +11,22 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [react()],
     server: {
+      // proxy: {
+      //   'localhost:3000': {
+      //     target: 'http://localhost:3000',
+      //     changeOrigin: true,
+      //     rewrite: (path) => path.replace(/^\/api/, ''),
+      //   },
+      // },
+      host: '0.0.0.0',
       proxy: {
-        'localhost:3000': {
+        '/socket.io/': {
           target: 'http://localhost:3000',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
+          secure: false,
+          ws: true,
         },
-      },
+      }
     },
   }
 })

@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express'
 import { createServer } from 'http'
 import bodyParser from 'body-parser'
-import * as socketio from 'socket.io'
+import {Server} from 'socket.io'
 import * as path from 'path'
 import lobbyLogger from './logger'
 import { LobbyBackType } from './types'
@@ -17,9 +17,10 @@ const app = express()
 
 const httpServer = createServer(app)
 
-const allowedOrigin = [/\b\w*\.?martinld.fr\b/,  "http://localhost:8080"]
+// const allowedOrigin = [/\b\w*\.?martinld.fr\b/,  "localhost:8080", "localhost:5173"]
+const allowedOrigin  = '*'  
 
-const io = new socketio.Server(httpServer, {
+const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigin
   }
