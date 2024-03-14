@@ -1,19 +1,19 @@
 services:
   frontend:
     build:
-      context: /home/martinld/Documents/OpenCardsAI/frontend/
-    container_name: nginx-react-ocg
+      context: ./frontend/
+    container_name: frontend-ocg
     ports:
       - "8080:80"
     volumes:
-      - /home/martinld/Documents/OpenCardsAI/frontend/.nginx:/etc/nginx/conf.d/
+      - ./frontend/.nginx:/etc/nginx/conf.d/:ro
     environment:
       - API_URL=api.ocg.martinld.fr
     depends_on:
       - backend
   backend:
     build:
-      context: /home/martinld/Documents/OpenCardsAI/backend/
+      context: ./backend/
     container_name: backend-ocg
     ports:
       - "3000:3000"

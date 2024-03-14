@@ -36,7 +36,8 @@ fi
 echo "Running 2/2: OCG Frontend"
 if ! podman container ps | grep -q "frontend-ocg"; then
         if ! podman container list -a | grep -q "frontend-ocg";then
-                podman run -d --name frontend-ocg --publish 8080:80 -v ./frontend/.nginx:/etc/nginx/conf.d/ ocg-front:latest
+                # Notice :ro keyword to mount the volume with readonly option
+                podman run -d --name frontend-ocg --publish 8080:80 -v ./frontend/.nginx:/etc/nginx/conf.d/:ro ocg-front:latest
         else
                 podman container start frontend-ocg
         fi
