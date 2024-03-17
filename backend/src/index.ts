@@ -55,18 +55,18 @@ app.get('/', (req: Request, res: Response) => {
 })
 
 io.use((socket, next) => {
-  const isShowlog = false
+  const isVerbose = false
   const sessionId = socket.handshake.auth.sessionId as string
-  if (isShowlog) { lobbyLogger.showSessionId(sessionId) }
+  if (isVerbose) { lobbyLogger.showSessionId(sessionId) }
   if (sessionId) {
     const session = sessionStore.findSession(sessionId)
     if (session) {
       socket.handshake.auth.sessionId = sessionId
-      if (isShowlog) { lobbyLogger.confirmSessionIdInSessionStore(session.userId, session.username) }
+      if (isVerbose) { lobbyLogger.confirmSessionIdInSessionStore(session.userId, session.username) }
       return next()
     }
   }
-  if (isShowlog) { lobbyLogger.denySessionIdInSessionStore() }
+  if (isVerbose) { lobbyLogger.denySessionIdInSessionStore() }
   const newSessionId = randomUUID()
   const newUserId = randomUUID()
   const username = 'User' + Math.floor(Math.random() * 1000).toString()
@@ -80,7 +80,7 @@ io.use((socket, next) => {
     imageName: "_",
     createdAt: Date.now()
   })
-  if (isShowlog) {
+  if (isVerbose) {
     lobbyLogger.createdNewSession(newSessionId, newUserId, username)
   } next()
 })

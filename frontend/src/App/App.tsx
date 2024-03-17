@@ -1,5 +1,4 @@
 import { Routes, Route, useNavigate, createBrowserRouter, RouterProvider, Outlet  } from 'react-router-dom'
-import io, { Socket } from 'socket.io-client';
 import './App.css'
 import { useEffect, useState } from 'react';
 import { LobbyFrontType } from '../types';
@@ -11,22 +10,7 @@ import CurrentLobby from '../pages/CurrentLobby';
 import Home from '../pages/Home';
 import PublicLobby from '../pages/PublicLobby';
 import PrivateLobby from '../pages/PrivateLobby';
-
-let socket: Socket;
-if (process.env.REACT_APP_API_URL == undefined){
-  // process.env.REACT_APP_API_URL = "localhost:3000"
-  socket = io()
-} else {
-  socket = io(process.env.REACT_APP_API_URL, {
-    autoConnect: false,
-    transports: ['websocket']
-  })
-}
-
-// const socket = io(process.env.REACT_APP_API_URL, {
-//   autoConnect: false,
-//   transports: ['websocket']
-// })
+import socket from '../socket';
 
 const router = createBrowserRouter([
   {path:'*', Component:Root}
@@ -87,14 +71,6 @@ function AppLogic() {
       socket.off('res-join-lobby', resNavigateToLobby)
     }
   }, [navigate])
-
-  useEffect(() => {
-    if (!socket.connected) {
-      const sessionId = localStorage.getItem('sessionId')
-      socket.auth = { sessionId: sessionId }
-      socket.connect()
-    }
-  }, [])
 
 
   return (

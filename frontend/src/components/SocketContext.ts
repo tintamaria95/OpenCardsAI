@@ -5,7 +5,7 @@ type SocketContent = {
     socket: Socket
   }
   export const SocketContext = createContext<SocketContent>({
-    socket: io('', {})
+    socket: io('', {autoConnect: false})
   })
 
   export const useSocketContext = () => useContext(SocketContext)
