@@ -1,7 +1,11 @@
 FROM node:lts as build
+ENV REACT_APP_API_URL="api.ocg.martinld.fr"
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
-CMD ["/bin/bash", "echo", "Built HTLM/JS files in ./frontend/dist/"]
+FROM docker.io/library/nginx as webserver
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 8080
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
