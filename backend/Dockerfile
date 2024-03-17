@@ -5,4 +5,4 @@ RUN npm ci
 COPY . .
 RUN npx tsc -p .
 EXPOSE 3000
-CMD ["/usr/local/bin/node", "/app/build/index.js"]
+CMD ["node", "/app/build/index.js"]

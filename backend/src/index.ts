@@ -178,3 +178,20 @@ io.on('connection', (socket) => {
 httpServer.listen(PORT, () => {
   lobbyLogger.backendRunning(PORT)
 })
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT signal')
+  httpServer.close(()=>{
+    console.log('Server is closed properly')
+    process.exit(0)
+  })
+})
+
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM signal')
+  httpServer.close(()=>{
+    console.log('Server is closed properly')
+    process.exit(0)
+  })
+})
+
