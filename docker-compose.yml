@@ -16,6 +16,7 @@ services:
     depends_on:
       - backend-nodejs-express
   webserver-nginx:
+  command: cp -r ./frontend/dist/ ./nginx/dist/
     build:
       context: ./nginx/
     container_name: webserver-ocg
