@@ -1,11 +1,12 @@
 import { createContext, useContext } from "react"
-import { io, Socket } from "socket.io-client"
+import { Socket } from "socket.io-client"
+import socket from "../socket"
 
 type SocketContent = {
     socket: Socket
   }
   export const SocketContext = createContext<SocketContent>({
-    socket: io('', {autoConnect: false})
+    socket: socket
   })
 
   export const useSocketContext = () => useContext(SocketContext)

@@ -1,19 +1,29 @@
 services:
-  frontend:
-    build:
-      context: ./frontend/
-    container_name: frontend-ocg
-    ports:
-      - "8080:80"
-    volumes:
-      - ./frontend/.nginx:/etc/nginx/conf.d/:ro
-    environment:
-      - API_URL=api.ocg.martinld.fr
-    depends_on:
-      - backend
-  backend:
+  backend-nodejs-express:
     build:
       context: ./backend/
     container_name: backend-ocg
     ports:
       - "3000:3000"
+  frontend-react:
+    build:
+      context: ./frontend/
+    container_name: frontend-ocg
+    environment:
+      - REACT_APP_API_URL=api.ocg.martinld.fr
+    volumes:
+      - ./frontend/dist/:app/dist:rw
+    depends_on:
+      - backend-nodejs-express
+  webserver-nginx:
+    build:
+      context: ./nginx/
+    container_name: webserver-ocg
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/conf/:/etc/nginx/conf.d/:ro
+      - ./frontend/dist/:/usr/share/nginx/html:ro
+    depends_on:
+      - frontend-react
+    
