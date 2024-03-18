@@ -1,5 +1,5 @@
 FROM node:lts as build
-ENV REACT_APP_API_URL="api.ocg.martinld.fr"
+ENV REACT_APP_API_URL="api-ocg.martinld.fr"
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
