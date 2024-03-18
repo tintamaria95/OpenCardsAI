@@ -11,9 +11,9 @@ services:
     container_name: frontend-ocg
     ports:
       - "8080:80"
+      - "4430:443"
     volumes:
-      - ./frontend/.nginx:/etc/nginx/conf.d/:ro
-    environment:
-      - API_URL=api.ocg.martinld.fr
+      - ./frontend/.nginx/conf/:/etc/nginx/conf.d/:ro
+      - ./frontend/.nginx/cerbot/:/etc/letsencrypt/:ro
     depends_on:
       - backend
