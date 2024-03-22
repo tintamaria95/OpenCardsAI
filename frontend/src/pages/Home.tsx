@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { Username } from '../components/Username'
 
 function Home() {
-
   return (
     <>
       <h1>CARDGAMES</h1>
@@ -25,4 +24,3 @@ function Home() {
 }
 
 export default Home
-

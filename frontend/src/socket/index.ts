@@ -1,6 +1,6 @@
-import { Socket, io } from "socket.io-client";
+import { Socket, io } from 'socket.io-client'
 
-let socket: Socket;
+let socket: Socket
 if (process.env.REACT_APP_API_URL == undefined) {
   socket = io({
     autoConnect: false
