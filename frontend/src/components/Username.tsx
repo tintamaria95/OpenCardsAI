@@ -1,15 +1,14 @@
-import { ChangeEvent, FormEvent, useState } from "react"
-import { useSocketContext } from "./SocketContext"
-import { useUserContext } from "./UserContext"
-
-
+import { ChangeEvent, FormEvent, useState } from 'react'
+import { useSocketContext } from '../contexts/SocketContext'
+import { useUserContext } from '../contexts/UserContext'
 
 export function Username() {
-  const {username, setUsername} = useUserContext()
+  const { username, setUsername } = useUserContext()
   const [isModifying, setIsModifying] = useState(false)
-  const {socket} = useSocketContext()
+  const [isEmptyString, setIsEmptyString] = useState(false)
+  const { socket } = useSocketContext()
 
-  function handleChange(e: ChangeEvent<HTMLInputElement>){
+  function handleChange(e: ChangeEvent<HTMLInputElement>) {
     setUsername(e.target.value)
   }
 
@@ -18,23 +17,30 @@ export function Username() {
     setIsModifying(true)
   }
 
-  function handleSubmitValidate(e: FormEvent){
+  function handleSubmitValidate(e: FormEvent) {
     e.preventDefault()
-    socket.emit('update-username', username)
-    localStorage.setItem('username', username)
-    setIsModifying(false)
+    if (username === '') {
+      setIsEmptyString(true)
+    } else {
+      socket.emit('update-username', username)
+      localStorage.setItem('username', username)
+      setIsModifying(false)
+      setIsEmptyString(false)
+    }
   }
 
-  return (
-    (isModifying) ? (
+  return isModifying ? (
+    <>
       <form onSubmit={handleSubmitValidate}>
         <input type="text" onChange={handleChange} placeholder={username} />
         <button type="submit">Validate pseudo</button>
       </form>
-    ) : (
-      <form onSubmit={handleSubmitChanges}>
+      {isEmptyString ? (<div>Error: Pseudo must contain at least one character</div>): (<div></div>)}
+    </>
+  ) : (
+    <form onSubmit={handleSubmitChanges}>
       <label>{username}</label>
-      <button type="submit">change pseudo</button>
-    </form>)
+      <button type="submit">Change pseudo</button>
+    </form>
   )
 }
