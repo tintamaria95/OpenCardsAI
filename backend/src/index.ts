@@ -1,15 +1,24 @@
 import express, { Request, Response } from 'express'
 import { createServer } from 'http'
 import bodyParser from 'body-parser'
-import {Server} from 'socket.io'
+import { Server } from 'socket.io'
 import * as path from 'path'
 import lobbyLogger from './logger'
 import { LobbyBackType } from './types'
 import { ROOMPUBLICLOBBY, handleUserLeftLobby } from './handleLobbyChanges'
 import * as cors from 'cors'
 import { InMemorySessionsStore } from './sessionStore'
-import { randomUUID } from 'crypto'
 import { InMemoryLobbiesStore } from './lobbyStore'
+import { checkSessionId } from './websocket/middleware'
+import {
+  disconnect,
+  joinMenu,
+  reqCreateLobby,
+  reqJoinLobby,
+  reqLobbyList,
+  reqUpdateLobby,
+  updateUsername
+} from './websocket/events'
 
 const PORT = 3000
 
@@ -18,7 +27,7 @@ const app = express()
 const httpServer = createServer(app)
 
 // const allowedOrigin = [/\b\w*\.?martinld.fr\b/,  "localhost:8080", "localhost:5173"]
-const allowedOrigin  = '*'  
+const allowedOrigin = '*'
 
 const io = new Server(httpServer, {
   cors: {
@@ -31,8 +40,6 @@ const corsOptions = {
   methods: 'GET,POST,DELETE',
   credentials: true
 }
-
-
 
 app.use(express.static('public'))
 app.use(bodyParser.json())
@@ -55,41 +62,13 @@ app.get('/', (req: Request, res: Response) => {
 })
 
 io.use((socket, next) => {
-  const isVerbose = false
-  const sessionId = socket.handshake.auth.sessionId as string
-  if (isVerbose) { lobbyLogger.showSessionId(sessionId) }
-  if (sessionId) {
-    const session = sessionStore.findSession(sessionId)
-    if (session) {
-      socket.handshake.auth.sessionId = sessionId
-      if (isVerbose) { lobbyLogger.confirmSessionIdInSessionStore(session.userId, session.username) }
-      return next()
-    }
-  }
-  if (isVerbose) { lobbyLogger.denySessionIdInSessionStore() }
-  const newSessionId = randomUUID()
-  const newUserId = randomUUID()
-  const username = 'User' + Math.floor(Math.random() * 1000).toString()
-
-  socket.handshake.auth.sessionId = newSessionId
-  sessionStore.saveSession(newSessionId, {
-    sessionId: newSessionId,
-    userId: newUserId,
-    lobbyId: undefined,
-    username: username,
-    imageName: "_",
-    createdAt: Date.now()
-  })
-  if (isVerbose) {
-    lobbyLogger.createdNewSession(newSessionId, newUserId, username)
-  } next()
+  checkSessionId(socket, sessionStore, lobbyLogger, next)
 })
 
 io.on('connection', (socket) => {
-
-  socket.onAny((event) => { console.log(`got ${event}`) })
-
   const sessionId = socket.handshake.auth.sessionId as string
+  lobbyLogger.userConnected(sessionId)
+
   const session = sessionStore.findSession(sessionId)
   if (!session) {
     lobbyLogger.sessionNotFound(sessionId)
@@ -99,18 +78,16 @@ io.on('connection', (socket) => {
   // socket.join(session.userId)
   io.to(socket.id).emit('session', session)
 
-  lobbyLogger.userConnected(sessionId)
-
-  socket.on('update-username',(username: string) => {
-    session.username = username
-    sessionStore.saveSession(sessionId, { ...session, username: username })
-    lobbyLogger.userUpdatedUsername(sessionId, username)
+  socket.onAny((event) => {
+    console.log(`got ${event}`)
   })
 
-  socket.on('join-menu', async () => {
-    if (session.lobbyId !== undefined){
-      await handleUserLeftLobby(io, socket, lobbyStore, session, sessionStore)
-    }
+  socket.on('update-username', (username: string) =>
+    updateUsername(username, sessionStore, session, lobbyLogger)
+  )
+
+  socket.on('join-menu', () =>{
+    joinMenu(io, socket, lobbyStore, sessionStore, session)
   })
 
   socket.on('join-publiclobby', async () => {
@@ -121,58 +98,55 @@ io.on('connection', (socket) => {
     await socket.leave(ROOMPUBLICLOBBY)
   })
 
-  socket.on('req-lobbylist', () => {
-    io.to(socket.id).emit('update-lobbylist-setall', lobbyStore.getAllLobbiesForFront(true))
-  })
+  socket.on('req-lobbylist', () => reqLobbyList(io, socket, lobbyStore))
 
-  socket.on('req-create-lobby', async (lobbyName: string, isPublic: boolean) => {
-      const lobbyId = lobbyStore.saveLobby(session, lobbyName, isPublic)
-      session.lobbyId = lobbyId
-      const lobbyForFront = lobbyStore.getLobbyForFront(lobbyId)
-      await socket.leave(ROOMPUBLICLOBBY)
-      await socket.join(lobbyId)
+  socket.on('req-create-lobby', (lobbyName: string, isPublic: boolean) =>
+    reqCreateLobby(
+      lobbyName,
+      isPublic,
+      io,
+      socket,
+      ROOMPUBLICLOBBY,
+      lobbyStore,
+      session
+    )
+  )
 
-      io.to(lobbyId).emit('res-join-lobby', 'success', lobbyForFront)
-      if (isPublic){
-      io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-addlobby', lobbyForFront)}
-  })
+  socket.on('req-join-lobby', (lobbyId: LobbyBackType['id']) =>
+    reqJoinLobby(
+      lobbyId,
+      io,
+      socket,
+      ROOMPUBLICLOBBY,
+      lobbyStore,
+      session,
+      lobbyLogger
+    )
+  )
 
-  socket.on('req-join-lobby', async (lobbyId: LobbyBackType['id']) => {
-    const lobby = lobbyStore.getLobby(lobbyId)
-    if (lobby !== undefined) {
-      if (lobbyStore.isUserInLobby(sessionId, lobby)) {
-        lobbyLogger.userAlreadyInLobby(sessionId, lobbyId)
-        io.to(lobbyId).emit('res-join-lobby', 'userAlreadyInLobby', lobbyStore.getLobbyForFront(lobbyId))
-      } else {
-        lobbyStore.addUserToLobby(session, lobbyId)
-        await socket.leave(ROOMPUBLICLOBBY)
-        await socket.join(lobbyId)
-        session.lobbyId = lobbyId
-        io.to(lobbyId).emit('res-join-lobby', 'success', lobbyStore.getLobbyForFront(lobbyId))
+  socket.on('req-update-lobby', () =>
+    reqUpdateLobby(io, socket, session, lobbyStore, lobbyLogger)
+  )
+
+  socket.on('req-start-game', (gameId: string) => {
+    const lobbyId = session.lobbyId
+    if (lobbyId !== undefined){
+      const lobby  = lobbyStore.getLobbyForFront(lobbyId)
+      if (lobby !== undefined){
+        let i = 0
+        const nb_players = lobby.users.length
+        io.to(lobbyId).emit('req-nextmove')
+        socket.on('req-update-gamestate', () => {
+          io.to(lobbyId).emit('res-update-gamestate', session.userId, Math.floor(Math.random() * 10))
+        })
+        io.to(lobbyId).emit('res-start-game', 'start')
       }
-    } else {
-      lobbyLogger.undefinedLobby(lobbyId)
-      io.to(socket.id).emit('res-join-lobby', 'undefinedLobby', undefined)
     }
   })
 
-  socket.on('req-update-lobby', () => {
-    if (session.lobbyId !== undefined) {
-      if (lobbyStore.getLobby(session.lobbyId) !== undefined){
-      io.to(session.lobbyId).emit('update-lobby', lobbyStore.getLobbyForFront(session.lobbyId))}
-      else{
-        lobbyLogger.logger.error('sessionId !== undefined but unknown in both public and private stores.')
-      }
-    }
-    else {
-      io.to(socket.id).emit('update-lobby', undefined)
-    }
-  })
-
-  socket.on('disconnect', async () => { 
-    lobbyLogger.userDisconnected(sessionId)
-    await handleUserLeftLobby(io, socket, lobbyStore, session, sessionStore) })
-
+  socket.on('disconnect', () =>
+    disconnect(io, socket, lobbyStore, session, sessionStore, lobbyLogger)
+  )
 })
 
 httpServer.listen(PORT, () => {
@@ -181,17 +155,16 @@ httpServer.listen(PORT, () => {
 
 process.on('SIGINT', () => {
   console.log('Received SIGINT signal')
-  httpServer.close(()=>{
+  httpServer.close(() => {
     console.log('Server is closed properly')
     process.exit(0)
   })
 })
-
+io
 process.on('SIGTERM', () => {
   console.log('Received SIGTERM signal')
-  httpServer.close(()=>{
+  httpServer.close(() => {
     console.log('Server is closed properly')
     process.exit(0)
   })
 })
-
