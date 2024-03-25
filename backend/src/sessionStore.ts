@@ -1,24 +1,21 @@
-import { UserBackType } from "./types"
-
-
+import { UserBackType } from './types'
 
 export class InMemorySessionsStore {
+  private sessions
 
-    private sessions
+  constructor() {
+    this.sessions = new Map<string, UserBackType>()
+  }
 
-    constructor() {
-        this.sessions = new Map<string, UserBackType>()
-    }
+  findSession(id: string) {
+    return this.sessions.get(id)
+  }
 
-    findSession(id: string) {
-        return this.sessions.get(id)
-    }
+  saveSession(id: string, user: UserBackType): void {
+    this.sessions.set(id, user)
+  }
 
-    saveSession(id: string, user: UserBackType): void {
-        this.sessions.set(id, user)
-    }
-
-    findAllSessions() {
-        return [...this.sessions.values()]
-    }
+  findAllSessions() {
+    return [...this.sessions.values()]
+  }
 }
