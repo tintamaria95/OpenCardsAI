@@ -15,8 +15,8 @@ export class AsyncGame {
     private foldFirstPlayerIndex: number
 
     // Async handlers
+    private isGameEnded: boolean
     private id2Index: Map<string, number>
-    private index2Id: Map<number, string>
     private possibleActions: Set<Actions>
     private possiblePlayerIds: Set<string>
     private pile: Pile
@@ -25,22 +25,24 @@ export class AsyncGame {
     private cptCardsPlayed = 0
 
     constructor(players: Player[], deck: Deck) {
+        gameLogger.debug('- GAME STARTS -')
+        this.isGameEnded = false
         this.id2Index = new Map<string, number>()
-        this.index2Id = new Map<number, string>()
         this.pile = new Pile()
         players.forEach((player, index) => {
             this.id2Index.set(player.getId(), index)
-            this.index2Id.set(index, player.getId())
         })
         this.players = players
         this.nbPlayers = players.length
         this.deck = deck
         this.deck.shuffle()
         this.nbRounds = Math.min(
-            3,
+            10,
             Math.floor(deck.get_deck_size() / this.nbPlayers)
         )
         this.roundFirstPlayerIndex = randomInt(this.nbPlayers)
+        gameLogger.debug(`Round first player: ${players[this.roundFirstPlayerIndex].getId()}`)
+        
         this.foldFirstPlayerIndex = this.roundFirstPlayerIndex
 
         this.possibleActions = new Set<Actions>(['setContract'])
@@ -48,31 +50,19 @@ export class AsyncGame {
         this.distributeCardsToPlayers()
     }
 
-    play() {
-        for (let round = 1; round < 4; round++) {
-            this.updateState("setContract", randomInt(round + 1), 'martin')
-            this.updateState("setContract", randomInt(round + 1), 'charles')
-            for (let i = 0; i < round; i++) {
-                this.updateState("playCard", randomInt(round - i), 'martin')
-                this.updateState("playCard", randomInt(round - i), 'charles')
-                this.updateState("playCard", randomInt(round - i), 'martin')
-            }
-        }
-    }
-
-    getNumberRounds() {
-        return this.nbRounds
+    getRoundIndex(){
+        return this.roundIndex
     }
 
     /**
     * Returns the score for a given contract and the folds that a player won during this round. The bonus points are added to the score if the player completed its contract. 
     */
-    score(contract: number, wonFolds: number, bonusPoints: number) {
+    public score(round: number, contract: number, wonFolds: number, bonusPoints: number) {
         if (contract === 0) {
             if (wonFolds === 0) {
-                return this.roundIndex * 10
+                return round * 10
             } else {
-                return this.roundIndex * (-10)
+                return round * (-10)
             }
         } else {
             if (contract === wonFolds) {
@@ -99,14 +89,18 @@ export class AsyncGame {
      * @param action 
      * @param playerId 
      */
-    updateState(actionType: 'setContract' | 'playCard', action: number, playerId: string) {
+    updateState(actionType: Actions, action: number, playerId: string) {
+        if (this.isGameEnded){
+            gameLogger.warn('Game ended - No action allowed anymore')
+            return
+        }
         if (!this.isActionAllowed(actionType, playerId)) {
             gameLogger.warn(`State update not allowed | actionType: ${actionType}, playerId: ${playerId}`)
             return
         }
         const playerIndex = this.id2Index.get(playerId)
         if (playerIndex === undefined) {
-            gameLogger.warn(`logic error: playerId '${playerId}' undefined in map object 'id2Index'`)
+            gameLogger.error(`Logic error: playerId '${playerId}' undefined in map object 'id2Index'`)
             return
         }
         if (actionType === 'setContract') {
@@ -120,7 +114,14 @@ export class AsyncGame {
                 }
             }
         } else if (actionType === 'playCard') {
-            this.actionPlayCard(action, playerIndex)
+            if (this.actionPlayCard(action, playerIndex)) {
+                if (this.isAllCardsPlayed()) {
+                    gameLogger.debug(`Fold ${this.foldIndex + 1} ended`)
+                    this.endFold()
+                } else {
+                    this.waitForNextPlayer()
+                }
+            }
         } else {
             throw new Error(`Unknown action type: ${actionType}`)
         }
@@ -138,23 +139,15 @@ export class AsyncGame {
     }
 
     actionPlayCard(action: number, playerIndex: number) {
-        if (action >= 0 && action <= (this.roundIndex - this.foldIndex) && Number.isInteger(action)) {
-            console.log(`${this.index2Id.get(playerIndex)}'s hand before play: ${this.players[playerIndex].getHand()}`)
-            console.log(action)
+        const maxCardIndex = (this.roundIndex - this.foldIndex - 1)
+        if (action >= 0 && action <= maxCardIndex && Number.isInteger(action)) {
             const chosenCard = this.players[playerIndex].playCard(action)
-            console.log(`${this.index2Id.get(playerIndex)}'s hand after play: ${this.players[playerIndex].getHand()}`)
-            gameLogger.debug(`'${this.index2Id.get(playerIndex)}' played ${chosenCard.id}`)
+            gameLogger.debug(`'${this.players[playerIndex].getId()}' played ${chosenCard.id}`)
             this.pile.addCard(chosenCard)
             this.cptCardsPlayed += 1
-            if (this.isAllCardsPlayed()) {
-                gameLogger.debug(`Fold ${this.foldIndex + 1} ended`)
-                this.endFold()
-             } else {
-                this.waitForNextPlayer()
-             }
             return true
         } else {
-            gameLogger.warn(`Cannot play card of index '${action}'`)
+            gameLogger.warn(`'${this.players[playerIndex].getId()}'cannot play card of index '${action}'`)
             return false
         }
     }
@@ -170,11 +163,7 @@ export class AsyncGame {
             return
         }
         const nextPlayerIndex = (currentPlayerIndex + 1) % this.nbPlayers
-        const nextPlayerId = this.index2Id.get(nextPlayerIndex)
-        if (nextPlayerId === undefined) {
-            gameLogger.error(`Unreachable player with index '${nextPlayerIndex}'`)
-            return
-        }
+        const nextPlayerId = this.players[nextPlayerIndex].getId()
         this.possiblePlayerIds.clear()
         this.possiblePlayerIds.add(nextPlayerId)
     }
@@ -183,22 +172,18 @@ export class AsyncGame {
         // this.pile.show()
         gameLogger.debug('winning card: ' + this.pile.getWinningCardIndex().toString())
         this.foldFirstPlayerIndex = (this.foldFirstPlayerIndex + this.pile.getWinningCardIndex()) % this.nbPlayers
-        gameLogger.debug('fold winner: ' + this.index2Id.get(this.foldFirstPlayerIndex))
+        gameLogger.debug('fold winner: ' + this.players[this.foldFirstPlayerIndex].getId())
         this.players[this.foldFirstPlayerIndex].incrementWonFolds()
         this.players[this.foldFirstPlayerIndex].addToBonusPoints(this.pile.getBonusPoints())
         this.foldIndex += 1
         this.pile = new Pile()
         this.cptCardsPlayed = 0
         this.possiblePlayerIds.clear()
-        const foldFirstPlayerId = this.index2Id.get(this.foldFirstPlayerIndex)
-        if (foldFirstPlayerId === undefined){
-            gameLogger.error(`Unreachable player with index '${this.foldFirstPlayerIndex}'`)
-            return
-        }
+        const foldFirstPlayerId = this.players[this.foldFirstPlayerIndex].getId()
         this.possiblePlayerIds.add(foldFirstPlayerId)
         if (this.foldIndex === this.roundIndex){
             gameLogger.debug(`Round ${this.roundIndex} ended`)
-            this.endRoundUpdate()
+            this.endRound()
         }
         
     }
@@ -214,16 +199,32 @@ export class AsyncGame {
     /**
      * This function prepares the game for the next round. It should be called once the round ends, which is when the last player has played the last card of its hand.
      */
-    endRoundUpdate() {
+    endRound() {
+        
+        this.players.forEach(player => {
+            gameLogger.debug(`Player ${player.getId()}: ${player.getWonFolds()} / ${player.getContract()}`)
+            player.addToGameScore(this.score(this.roundIndex, player.getContract(), player.getWonFolds(), player.getBonusPoints()))
+            gameLogger.debug(`Score : ${player.getGameScore()}`)
+        })
+        if(this.roundIndex === this.nbRounds){
+            this.isGameEnded = true
+            gameLogger.debug('- GAME ENDED -')
+            return
+        }
+        this.roundIndex += 1
+        this.foldIndex = 0
+        gameLogger.debug(`---------- `)
+        gameLogger.debug(`Start round ${this.roundIndex}`)
         this.roundFirstPlayerIndex = (this.roundFirstPlayerIndex + 1) % this.nbPlayers
+        gameLogger.debug(`Round first player: ${this.players[this.roundFirstPlayerIndex].getId()}`)
         this.foldFirstPlayerIndex = this.roundFirstPlayerIndex
         this.deck.shuffle()
         this.possibleActions.clear()
         this.possibleActions.add('setContract')
         this.possiblePlayerIds.clear()
-        this.players.forEach(player => {this.possiblePlayerIds.add(player.getId())})
-        this.roundIndex += 1
-        this.foldIndex = 0
+        this.players.forEach(player => {
+            this.possiblePlayerIds.add(player.getId())
+            player.resetRoundStats()})
         this.distributeCardsToPlayers()
     }
 
@@ -234,41 +235,5 @@ export class AsyncGame {
                 round_cards.slice(p_i * this.roundIndex, p_i * this.roundIndex + this.roundIndex)
             )
         }
-    }
-
-    play_round() {
-        this.roundFirstPlayerIndex = (this.roundFirstPlayerIndex + 1) % this.nbPlayers
-        this.foldFirstPlayerIndex = this.roundFirstPlayerIndex
-        this.players.forEach(player => { player.resetRoundStats() })
-        this.deck.shuffle()
-        this.distributeCardsToPlayers()
-        // Each player chooses a contract // Must change to simultaneous later
-        for (let p_i = 0; p_i < this.nbPlayers; p_i++) {
-            const randContract = randomInt(this.roundIndex)
-            this.players[p_i].setContract(randContract)
-        }
-        // Each player add a card to the Pile
-        for (let card_i = 0; card_i < this.roundIndex; card_i++) {
-            gameLogger.debug('first player: ' + this.foldFirstPlayerIndex)
-            const pile = new Pile()
-            for (let p_i = 0; p_i < this.nbPlayers; p_i++) {
-                const playerIndex = (p_i + this.foldFirstPlayerIndex) % this.nbPlayers
-                const chosenCard = this.players[playerIndex].playCard(randomInt(this.roundIndex - card_i))
-                pile.addCard(chosenCard)
-            }
-            pile.show()
-            gameLogger.debug('winning card: ' + pile.getWinningCardIndex().toString())
-            this.foldFirstPlayerIndex = (this.foldFirstPlayerIndex + pile.getWinningCardIndex()) % this.nbPlayers
-            gameLogger.debug('fold winner: ' + (this.foldFirstPlayerIndex.toString()))
-            this.players[this.foldFirstPlayerIndex].incrementWonFolds()
-            this.players[this.foldFirstPlayerIndex].addToBonusPoints(pile.getBonusPoints())
-        }
-        gameLogger.debug('player folds:')
-        this.players.forEach(player => {
-            gameLogger.debug(`Player ${player.getId()}: ${player.getWonFolds()} / ${player.getContract()}`)
-            player.addToGameScore(this.score(player.getContract(), player.getWonFolds(), player.getBonusPoints()))
-            gameLogger.debug(`Score : ${player.getGameScore()}`)
-        })
-        gameLogger.debug(`end this.roundIndex ${this.roundIndex}`)
     }
 }
