@@ -1,3 +1,4 @@
+import { gameLogger } from '../../logger'
 import { Card } from './Card'
 
 /**
@@ -19,6 +20,15 @@ export class Pile {
 
   constructor() {
     this.pile = []
+  }
+
+  show(){
+    gameLogger.debug('------')
+    gameLogger.debug('Pile: ')
+    this.pile.forEach(card => {
+      gameLogger.debug(card.get_name())
+    })
+    gameLogger.debug('------')
   }
 
   getWinningCardIndex() {
@@ -46,7 +56,7 @@ export class Pile {
           this.currentWinnningCardIndex,
           this.pile.length - 1
         )
-        if (index == -1) {
+        if (index === -1) {
           throw new Error(
             'index of winning card must not be -1. Error in getWinningCardIndex'
           )

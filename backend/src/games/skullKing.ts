@@ -3,6 +3,8 @@ import { Card } from './components/Card'
 import { skColors } from './components/Card'
 import { Game } from './components/Game'
 import { Player } from './components/Player'
+import { gameLogger } from '../logger'
+import { AsyncGame } from './components/AsyncGame'
 
 const colors: skColors[] = ['yellow', 'red', 'blue']
 const oneColorCards = (color: skColors) =>
@@ -39,9 +41,10 @@ const allCards = [
 
 const deck = new Deck(allCards)
 
-const player1 = new Player('1')
-const player2 = new Player('2')
+const player1 = new Player('martin')
+const player2 = new Player('charles')
+// const player4 = new Player('4')
 
-const game = new Game([player1, player2], deck)
-console.log('begin play')
+const game = new AsyncGame([player1, player2], deck)
+gameLogger.debug('begin play')
 game.play()

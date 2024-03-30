@@ -15,6 +15,9 @@ export class Deck {
   }
 
   get_cards(n: number) {
+    /**
+     * Returns the n first cards of the deck
+     */
     return this.deck.slice(0, n)
   }
 
