@@ -40,4 +40,13 @@ export class Card {
       this.id = value.toString()
     }
   }
+
+  get_name(){
+    let name = ''
+    if(this.color !== undefined){
+      name += this.color
+    }
+    name += this.value.toString()
+    return name
+  }
 }

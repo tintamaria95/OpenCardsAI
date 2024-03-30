@@ -1,6 +1,7 @@
 import winston from 'winston'
 import * as dotenv from 'dotenv'
 import { LobbyBackType, UserBackType } from './types'
+import * as fs from 'fs'
 
 dotenv.config()
 
@@ -20,6 +21,15 @@ if (process.env.NODE_ENV !== 'production') {
     })
   )
 }
+
+fs.writeFileSync('game.log', '')
+const gameLogger = winston.createLogger({
+  level: 'debug',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'game.log', level: 'debug' })
+  ]
+})
 
 export class MainLogger {
   logger: winston.Logger
@@ -138,4 +148,4 @@ export class MainLogger {
 
 const lobbyLogger = new MainLogger(winstonLogger)
 
-export default lobbyLogger
+export {lobbyLogger, gameLogger}
