@@ -8,8 +8,8 @@ type PhaseContractProp = {
 export function PhaseContract({maxContractValue, playerHand}: PhaseContractProp){
     const {socket} = useSocketContext()
 
-        function handleClick(index: number){
-            socket.emit('req-update-gameState', 'setContract', index)
+        function handleClick(contractValue: number){
+            socket.emit('req-update-gameState', {type: 'setContract', contractValue: contractValue})
         }
     
     return (

@@ -9,7 +9,7 @@ export class PileSK extends Pile {
 
   declare pile: Array<CardSK>
 
-  private trick_bonus_points = 0
+  private trickBonusPoints = 0
   private pirateCardIndex = -1
   private skullKingCardIndex = -1
   private mermaidCardIndex = -1
@@ -21,7 +21,7 @@ export class PileSK extends Pile {
   }
 
   getBonusPoints() {
-    return this.trick_bonus_points
+    return this.trickBonusPoints
   }
 
 
@@ -100,18 +100,18 @@ export class PileSK extends Pile {
             if (nextCard.value == 'mermaid') {
               this.mermaidCardIndex = nextCardIndex
               if (this.skullKingCardIndex !== -1) {
-                this.trick_bonus_points = this.bonusPointsconfig['captureSK']
+                this.trickBonusPoints = this.bonusPointsconfig['captureSK']
                 return nextCardIndex
               }
-              this.trick_bonus_points = this.bonusPointsconfig['captureMermaid']
+              this.trickBonusPoints = this.bonusPointsconfig['captureMermaid']
               return firstCardIndex
             } else if (nextCard.value == 'skullKing') {
               this.skullKingCardIndex = nextCardIndex
               if (this.mermaidCardIndex !== -1) {
-                this.trick_bonus_points = this.bonusPointsconfig['captureSK']
+                this.trickBonusPoints = this.bonusPointsconfig['captureSK']
                 return this.mermaidCardIndex
               }
-              this.trick_bonus_points = this.bonusPointsconfig['capturePirate']
+              this.trickBonusPoints = this.bonusPointsconfig['capturePirate']
               return nextCardIndex
             } else {
               throw new Error('Unhandled case 1')
@@ -121,14 +121,14 @@ export class PileSK extends Pile {
             if (nextCard.value == 'pirate') {
               this.pirateCardIndex = nextCardIndex
               if (this.mermaidCardIndex !== -1) {
-                this.trick_bonus_points = this.bonusPointsconfig['captureSK']
+                this.trickBonusPoints = this.bonusPointsconfig['captureSK']
                 return this.mermaidCardIndex
               }
-              this.trick_bonus_points = this.bonusPointsconfig['capturePirate']
+              this.trickBonusPoints = this.bonusPointsconfig['capturePirate']
               return firstCardIndex
             } else if (nextCard.value == 'mermaid') {
               this.mermaidCardIndex = nextCardIndex
-              this.trick_bonus_points = this.bonusPointsconfig['captureSK']
+              this.trickBonusPoints = this.bonusPointsconfig['captureSK']
               return nextCardIndex
             } else {
               throw new Error('Unhandled case 2')
@@ -137,15 +137,15 @@ export class PileSK extends Pile {
             this.mermaidCardIndex = firstCardIndex
             if (nextCard.value == 'skullKing') {
               this.skullKingCardIndex = nextCardIndex
-              this.trick_bonus_points = this.bonusPointsconfig['captureSK']
+              this.trickBonusPoints = this.bonusPointsconfig['captureSK']
               return firstCardIndex
             } else if (nextCard.value == 'pirate') {
               this.pirateCardIndex = nextCardIndex
               if (this.skullKingCardIndex !== -1) {
-                this.trick_bonus_points = this.bonusPointsconfig['captureSK']
+                this.trickBonusPoints = this.bonusPointsconfig['captureSK']
                 return firstCardIndex
               }
-              this.trick_bonus_points = this.bonusPointsconfig['captureMermaid']
+              this.trickBonusPoints = this.bonusPointsconfig['captureMermaid']
               return nextCardIndex
             } else {
               throw new Error('Unhandled case 3')

@@ -5,7 +5,21 @@ import { PileSK } from './PileSK'
 import { gameLogger } from '../../logger'
 import { AsyncGame } from '../commonClasses/AsyncGame'
 
-export type ActionsSK = 'setContract' | 'playCard' | 'chooseScaryMaryType'
+export type ActionSetContract = {
+    type: "setContract",
+    contractValue: number
+}
+
+export type ActionPlayCard = {
+    type: "playCard",
+    cardId: string
+}
+
+export type ActionChooseScaryMaryType = {
+    type: 'chooseScaryMaryType',
+    choice: 'pirate' | 'escape'
+}
+export type ActionsSK = ActionSetContract | ActionPlayCard | ActionChooseScaryMaryType
 
 export type State = {
     nbPlayers: number,
@@ -24,7 +38,7 @@ export type State = {
 type PlayerFrontState = {
     roundIndex: number,
     roundFirstPlayerIndex: number
-    possibleActions: ActionsSK[],
+    possibleActions: ActionsSK['type'][],
     possiblePlayers: string[],
     pileCards: string[],
     contracts: number[],
@@ -38,7 +52,7 @@ type PlayerFrontState = {
 export class AsyncGameSK extends AsyncGame {
     private deck: DeckSK
     private id2Index: Map<string, number>
-    private possibleActions: Set<ActionsSK>
+    private possibleActions: Set<ActionsSK['type']>
     private possiblePlayerIds: Set<string>
     private state: State
 
@@ -49,7 +63,7 @@ export class AsyncGameSK extends AsyncGame {
 
 
         this.id2Index =new Map<string, number>(),
-        this.possibleActions = new Set<ActionsSK>(['setContract']),
+        this.possibleActions = new Set<ActionsSK['type']>(['setContract']),
         this.possiblePlayerIds = new Set(Array.from({ length: players.length }, (_, index) => players[index].getId()))
 
         this.state = {
@@ -78,7 +92,7 @@ export class AsyncGameSK extends AsyncGame {
         this.distributeCardsToPlayers()
     }
 
-    public getPlayerState(id: string): PlayerFrontState{
+    public getPlayerState(playerId: string): PlayerFrontState{
         return {
             // Public informations
             roundIndex: this.getRoundIndex(),
@@ -90,7 +104,7 @@ export class AsyncGameSK extends AsyncGame {
             nbTricks: this.getNbTricks(),
             scores: this.getScores(),
             // Private information
-            playerHand: this.getPlayerCards(id)
+            playerHand: this.getPlayerCards(playerId)
 
         }
     }
@@ -187,8 +201,8 @@ export class AsyncGameSK extends AsyncGame {
     /**
      * Security function which returns true if a player tries to play the wrong action or at the wrong moment.
      */
-    public isActionAllowed(actionType: ActionsSK, playerId: string) {
-        if (this.possibleActions.has(actionType) && this.possiblePlayerIds.has(playerId)) {
+    public isActionAllowed(action: ActionsSK, playerId: string) {
+        if (this.possibleActions.has(action['type']) && this.possiblePlayerIds.has(playerId)) {
             return true
         }
         return false
@@ -200,13 +214,13 @@ export class AsyncGameSK extends AsyncGame {
      * @param action 
      * @param playerId 
      */
-    public updateState(actionType: ActionsSK, action: number, playerId: string) {
+    public updateState(action: ActionsSK, playerId: string) {
         if (this.state.isGameEnded) {
             gameLogger.warn('Game ended - No action allowed anymore')
             return
         }
-        if (!this.isActionAllowed(actionType, playerId)) {
-            gameLogger.warn(`State update not allowed | actionType: ${actionType}, playerId: ${playerId}`)
+        if (!this.isActionAllowed(action, playerId)) {
+            gameLogger.warn(`State update not allowed | actionType: ${action['type']}, playerId: ${playerId}`)
             return
         }
         const playerIndex = this.id2Index.get(playerId)
@@ -214,17 +228,17 @@ export class AsyncGameSK extends AsyncGame {
             gameLogger.error(`Logic error: playerId '${playerId}' undefined in map object 'id2Index'`)
             return
         }
-        if (actionType === 'setContract') {
+        if (action['type'] === 'setContract') {
             if (this.actionSetContract(action, playerIndex)) {
                 gameLogger.debug(`Player '${playerId}' sets contracts = ${action}`)
                 if (this.isAllContractsSet()) {
-                    this.possibleActions.delete('setContract')
+                    this.possibleActions.clear()
                     this.possibleActions.add('playCard')
                     this.possiblePlayerIds.add(this.state.players[this.state.roundFirstPlayerIndex].getId())
                     gameLogger.debug('All players have set their contracts. Next phase: PlayCard')
                 }
             }
-        } else if (actionType === 'playCard') {
+        } else if (action['type'] === 'playCard') {
             if (this.actionPlayCard(action, playerIndex)) {
                 if (this.isAllCardsPlayed()) {
                     gameLogger.debug(`Trick ${this.state.trickIndex + 1} ended`)
@@ -234,29 +248,30 @@ export class AsyncGameSK extends AsyncGame {
                 }
             }
         
-        } else if (actionType === 'chooseScaryMaryType') {
+        } else if (action['type'] === 'chooseScaryMaryType') {
             // TODO
         } else {
-            throw new Error(`Unknown action type: ${actionType}`)
+            throw new Error(`Unknown action type: ${action['type']}`)
         }
     }
 
-    private actionSetContract(action: number, playerIndex: number) {
-        if (action >= 0 && action <= this.state.roundIndex && Number.isInteger(action)) {
-            this.state.players[playerIndex].setContract(action)
+    private actionSetContract(action: ActionSetContract, playerIndex: number) {
+        if (action['contractValue'] >= 0 && action['contractValue'] <= this.state.roundIndex && Number.isInteger(action['contractValue'])) {
+            this.state.players[playerIndex].setContract(action['contractValue'])
             this.possiblePlayerIds.delete(this.state.players[playerIndex].getId())
             return true
         } else {
-            gameLogger.warn(`Cannot set a contract of value '${action}' at this.roundIndex ${this.state.roundIndex}`)
+            gameLogger.warn(`Cannot set a contract of value '${action}' at round ${this.state.roundIndex}`)
             return false
         }
     }
 
-    private actionPlayCard(action: number, playerIndex: number) {
-        const maxCardIndex = (this.state.roundIndex - this.state.trickIndex - 1)
-        if (action >= 0 && action <= maxCardIndex && Number.isInteger(action)) {
-            const chosenCard = this.state.players[playerIndex].playCard(action)
-            gameLogger.debug(`'${this.state.players[playerIndex].getId()}' played ${chosenCard.id}`)
+    private actionPlayCard(action: ActionPlayCard, playerIndex: number) {
+        const player = this.state.players[playerIndex]
+        const cardIndexInHand = player.getPlayerCardIndex(action['cardId'])
+        if (cardIndexInHand !== -1) {
+            const chosenCard = player.playCard(cardIndexInHand)
+            gameLogger.debug(`'${player.getId()}' played ${chosenCard.id}`)
             this.state.pile.addCard(chosenCard)
             return true
         } else {
@@ -344,9 +359,16 @@ export class AsyncGameSK extends AsyncGame {
     private distributeCardsToPlayers() {
         const round_cards = this.deck.getCards(this.state.nbPlayers * this.state.roundIndex)
         for (let p_i = 0; p_i < this.state.nbPlayers; p_i++) {
-            this.state.players[p_i].set_cards(
+            this.state.players[p_i].setCards(
                 round_cards.slice(p_i * this.state.roundIndex, p_i * this.state.roundIndex + this.state.roundIndex)
             )
         }
+    }
+
+    /**
+     * Check if a player has the right to play a specific card in the Pile. In Skull King, a player must play the color announced first if he has it in hand. The rules say that the player can avoid following this rule if the card that he wants to play is a "special card" (pirate or escape for example). 
+     */
+    private isCardPlayableInPile(cardId: string){
+        
     }
 }

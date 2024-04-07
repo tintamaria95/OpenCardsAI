@@ -143,8 +143,8 @@ io.on('connection', (socket) => {
       return
     }
     lobby.users.forEach(user => io.to(user.sessionId).emit('gameState', game.getPlayerState(user.sessionId)))
-    socket.on('req-update-gameState', (actionType: ActionsSK, action: number) => {
-      game.updateState(actionType, action, sessionId)
+    socket.on('req-update-gameState', (action: ActionsSK) => {
+      game.updateState(action, sessionId)
       lobby.users.forEach(user => io.to(user.sessionId).emit('gameState', game.getPlayerState(user.sessionId)))
     })
   })
