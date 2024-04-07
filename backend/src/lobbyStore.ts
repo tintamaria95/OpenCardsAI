@@ -4,7 +4,7 @@ import {
   UserBackType,
   UserFrontType
 } from './types'
-import logger from './logger'
+import {lobbyLogger} from './logger'
 import { randomUUID } from 'crypto'
 
 export class InMemoryLobbiesStore {
@@ -94,7 +94,7 @@ export class InMemoryLobbiesStore {
   addUserToLobby(user: UserBackType, lobbyId: LobbyBackType['id']) {
     const lobby = this.getLobby(lobbyId)
     if (lobby === undefined) {
-      logger.undefinedLobby(lobbyId)
+      lobbyLogger.undefinedLobby(lobbyId)
     } else {
       lobby.users.set(user.sessionId, user)
       user.lobbyId = lobbyId
@@ -107,11 +107,11 @@ export class InMemoryLobbiesStore {
     if (lobby === undefined) {
       return
     } else if (!this.isUserInLobby(user.sessionId, lobby)) {
-      logger.userNotInLobby(user.sessionId, lobbyId)
+      lobbyLogger.userNotInLobby(user.sessionId, lobbyId)
       return
     } else {
       lobby.users.delete(user.sessionId)
-      logger.removedUserFromLobby(user.sessionId, lobbyId)
+      lobbyLogger.removedUserFromLobby(user.sessionId, lobbyId)
       user.lobbyId = undefined
     }
     return lobby

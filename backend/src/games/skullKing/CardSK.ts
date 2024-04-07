@@ -1,11 +1,14 @@
+import { Card } from "../commonClasses/Card"
+
 export type skColors = 'yellow' | 'red' | 'blue' | 'black'
 type CardCategory = 'escape' | 'yrbColor' | 'black' | 'character'
 
-export class Card {
-  readonly value: number | 'escape' | 'pirate' | 'skullKing' | 'mermaid'
-  readonly color?: skColors
+export class CardSK extends Card {
+  declare readonly value: number | 'escape' | 'pirate' | 'skullKing' | 'mermaid'
+  declare readonly color?: skColors
+  
   readonly category: CardCategory
-  readonly id: string
+  
   static readonly categoryHierarchy: CardCategory[] = [
     'escape',
     'yrbColor',
@@ -13,11 +16,12 @@ export class Card {
     'character'
   ]
 
-  constructor(
+  constructor( 
     category: CardCategory,
     value: number | 'escape' | 'pirate' | 'skullKing' | 'mermaid',
     color?: skColors
   ) {
+    super(value, color)
     if (
       (category === 'yrbColor' || category === 'black') &&
       typeof value !== 'number'
@@ -32,21 +36,5 @@ export class Card {
       )
     }
     this.category = category
-    this.value = value
-    this.color = color
-    if (color !== undefined) {
-      this.id = value.toString() + color
-    } else {
-      this.id = value.toString()
-    }
-  }
-
-  get_name(){
-    let name = ''
-    if(this.color !== undefined){
-      name += this.color
-    }
-    name += this.value.toString()
-    return name
   }
 }

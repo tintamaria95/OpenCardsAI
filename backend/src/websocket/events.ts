@@ -98,29 +98,6 @@ export async function reqJoinLobby(
   }
 }
 
-export function reqUpdateLobby(
-  io: Server,
-  socket: Socket,
-  session: UserBackType,
-  lobbyStore: InMemoryLobbiesStore,
-  logger: MainLogger
-) {
-  if (session.lobbyId !== undefined) {
-    if (lobbyStore.getLobby(session.lobbyId) !== undefined) {
-      io.to(session.lobbyId).emit(
-        'update-lobby',
-        lobbyStore.getLobbyForFront(session.lobbyId)
-      )
-    } else {
-      logger.logger.error(
-        'sessionId !== undefined but unknown in both public and private stores.'
-      )
-    }
-  } else {
-    io.to(socket.id).emit('update-lobby', undefined)
-  }
-}
-
 export async function disconnect(
   io: Server,
   socket: Socket,

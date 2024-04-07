@@ -1,9 +1,11 @@
+import { AsyncGameSK } from "./games/skullKing/AsyncGameSK"
+
 type UserFrontType = {
-  sessionId?: string // private
-  lobbyId?: string // private
+  // sessionId?: string // private
   userId: string // public between users
   username: string
   imageName: string
+  lobbyId?: string
 }
 
 type LobbyFrontType = {
@@ -16,10 +18,10 @@ type LobbyFrontType = {
 type UserBackType = {
   sessionId: string
   userId: string
-  lobbyId: string | undefined
   username: string
   imageName: string
   createdAt: number
+  lobbyId?: string
 }
 
 type LobbyBackType = {
@@ -28,6 +30,7 @@ type LobbyBackType = {
   isPublic: boolean
   createdAt: number
   users: Map<UserBackType['sessionId'], UserBackType>
+  game?: AsyncGameSK
 }
 
 type LobbyStore = Map<LobbyBackType['id'], LobbyBackType>

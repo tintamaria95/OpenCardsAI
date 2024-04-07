@@ -32,6 +32,22 @@ type LobbyBackType = {
 
 type LobbyStore = Map<LobbyBackType['id'], LobbyBackType>
 
+export type ActionsSK = 'setContract' | 'playCard'
+
+export type PlayerFrontState = {
+  roundIndex: number,
+  roundFirstPlayerIndex: number,
+  possibleActions: ActionsSK[],
+  possiblePlayers: string[],
+  pileCards: string[],
+  contracts: number[],
+  nbTricks: number[],
+  scores: number[],
+  // Private information
+  playerHand: string[]
+}
+
+
 export type {
   LobbyStore,
   LobbyBackType,
