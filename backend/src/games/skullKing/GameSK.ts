@@ -63,7 +63,7 @@ export class GameSK extends Game {
     // Distribute cards to players
     const round_cards = this.deck.getCards(this.nb_players * round)
     for (let p_i = 0; p_i < this.nb_players; p_i++) {
-      this.players[p_i].set_cards(
+      this.players[p_i].setCards(
         round_cards.slice(p_i * round, p_i * round + round)
       )
     }

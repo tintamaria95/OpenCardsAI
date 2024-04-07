@@ -28,8 +28,8 @@ const gameLogger = winston.createLogger({
   format: winston.format.json(),
   transports: [
     new winston.transports.File({ filename: 'game.log', level: 'debug' })
-    // ,
-    // new winston.transports.Console()
+    ,
+    new winston.transports.Console()
   ]
 })
 

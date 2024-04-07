@@ -31,8 +31,8 @@ export function PhasePlayCard({ nbTricks, contracts, pileCards, playerHand }: Ph
             <section>
                 <h3>Cards in Hand</h3>
                 <ul>
-                    {playerHand.map((card, index) => (
-                        <li key={index}><Playable card={<>{index} - {card}</>} index={index} /></li>
+                    {playerHand.map((cardId, index) => (
+                        <li key={index}><Playable card={<>{index} - {cardId}</>} cardId={cardId} /></li>
                     ))}
                 </ul>
             </section>

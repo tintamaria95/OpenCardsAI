@@ -11,10 +11,6 @@ export class Player {
     this.cards = []
   }
 
-  Anonymise(){
-    this.id = "_"
-  }
-
   getId(){
     return this.id
   }
@@ -30,7 +26,7 @@ export class Player {
     return hand
   }
 
-  set_cards(cards: Card[]) {
+  setCards(cards: Card[]) {
     this.cards = cards
   }
 
@@ -41,5 +37,18 @@ export class Player {
     const card = this.cards[i]
     this.cards.splice(i, 1)
     return card
+  }
+
+  /**
+   * Return the index of the card in the player's hand.
+   * @param cardId The card id of the Card object
+   * @returns the index of the card in the hand. If not in the hand, returns -1
+   */
+  getPlayerCardIndex(cardId: string){
+    const hand = this.getHand()
+    if (hand.includes(cardId)){
+      return hand.indexOf(cardId)
+    }
+    return -1
   }
 }
