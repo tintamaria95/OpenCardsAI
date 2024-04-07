@@ -3,9 +3,9 @@ import { createServer } from 'http'
 import bodyParser from 'body-parser'
 import { Server } from 'socket.io'
 import * as path from 'path'
-import lobbyLogger from './logger'
+import {lobbyLogger} from './logger'
 import { LobbyBackType } from './types'
-import { ROOMPUBLICLOBBY, handleUserLeftLobby } from './handleLobbyChanges'
+import { ROOMPUBLICLOBBY } from './handleLobbyChanges'
 import * as cors from 'cors'
 import { InMemorySessionsStore } from './sessionStore'
 import { InMemoryLobbiesStore } from './lobbyStore'
@@ -16,9 +16,11 @@ import {
   reqCreateLobby,
   reqJoinLobby,
   reqLobbyList,
-  reqUpdateLobby,
   updateUsername
 } from './websocket/events'
+import { ActionsSK, AsyncGameSK } from './games/skullKing/AsyncGameSK'
+import { PlayerSK } from './games/skullKing/PlayerSK'
+import { DeckSK } from './games/skullKing/DeckSK'
 
 const PORT = 3000
 
@@ -75,7 +77,7 @@ io.on('connection', (socket) => {
     return Error('Session not found')
   }
 
-  // socket.join(session.userId)
+  socket.join(session.sessionId)
   io.to(socket.id).emit('session', session)
 
   socket.onAny((event) => {
@@ -124,22 +126,42 @@ io.on('connection', (socket) => {
     )
   )
 
-  socket.on('req-update-lobby', () =>
-    reqUpdateLobby(io, socket, session, lobbyStore, lobbyLogger)
-  )
+  socket.on('req-get-gameState', () => {
+    const lobbyId = session.lobbyId
+    if (lobbyId == undefined) {
+      lobbyLogger.undefinedLobby(lobbyId)
+      return
+    }
+    const lobby = lobbyStore.getLobby(lobbyId)
+    if (lobby === undefined) {
+      lobbyLogger.undefinedLobby(lobbyId)
+      return
+    }
+    const game = lobby.game
+    if (game === undefined) {
+      lobbyLogger.undefinedGame(lobbyId)
+      return
+    }
+    lobby.users.forEach(user => io.to(user.sessionId).emit('gameState', game.getPlayerState(user.sessionId)))
+    socket.on('req-update-gameState', (actionType: ActionsSK, action: number) => {
+      game.updateState(actionType, action, sessionId)
+      lobby.users.forEach(user => io.to(user.sessionId).emit('gameState', game.getPlayerState(user.sessionId)))
+    })
+  })
 
-  socket.on('req-start-game', (gameId: string) => {
+
+  socket.on('req-start-game', () => {
     const lobbyId = session.lobbyId
     if (lobbyId !== undefined){
-      const lobby  = lobbyStore.getLobbyForFront(lobbyId)
+      const lobby  = lobbyStore.getLobby(lobbyId)
       if (lobby !== undefined){
-        let i = 0
-        const nb_players = lobby.users.length
-        io.to(lobbyId).emit('req-nextmove')
-        socket.on('req-update-gamestate', () => {
-          io.to(lobbyId).emit('res-update-gamestate', session.userId, Math.floor(Math.random() * 10))
-        })
-        io.to(lobbyId).emit('res-start-game', 'start')
+        const players: PlayerSK[] = []
+        lobby.users.forEach(user => {
+          players.push(new PlayerSK(user.sessionId, user.username))})
+        const deck = new DeckSK()
+        const game = new AsyncGameSK(players, deck)
+        lobby.game = game
+        io.to(lobbyId).emit('res-start-game')
       }
     }
   })

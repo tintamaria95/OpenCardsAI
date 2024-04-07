@@ -141,6 +141,10 @@ export class MainLogger {
     }
   }
 
+  undefinedGame(lobbyId: LobbyBackType['id']){
+    this.logger.warn(`Lobby with id '${lobbyId}' has an undefined 'game' property.`)
+  }
+
   // Errors
 
   sessionNotFound(sessionId: UserBackType['sessionId']) {

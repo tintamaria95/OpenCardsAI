@@ -1,20 +1,21 @@
 import { Card } from './Card'
 
 export class Deck {
-  private deck: Array<Card>
-  constructor(cards: Card[]) {
-    this.deck = cards
-  }
+  declare protected deck: Array<Card>
 
-  get_deck() {
+  setDeck(cards: Card[]){
+    this.deck = cards
+}
+
+  getDeck() {
     return this.deck
   }
 
-  get_deck_size() {
-    return this.get_deck().length
+  getDeckSize() {
+    return this.getDeck().length
   }
 
-  get_cards(n: number) {
+  getCards(n: number) {
     /**
      * Returns the n first cards of the deck
      */

@@ -16,6 +16,7 @@ import PublicLobby from '../pages/PublicLobby'
 import PrivateLobby from '../pages/PrivateLobby'
 import socket from '../socket'
 import { CurrentLobbyContextProvider } from '../contexts/CurrentLobbyContextProvider'
+import { GlobalErrorElement } from '../components/GlobalErrorElement'
 
 function Root() {
   return (
@@ -32,7 +33,7 @@ function Root() {
   )
 }
 
-const router = createBrowserRouter([{ path: '*', Component: Root }])
+const router = createBrowserRouter([{ path: '*', Component: Root, errorElement: <GlobalErrorElement/>}])
 
 function App() {
   return <RouterProvider router={router} />

@@ -1,48 +1,40 @@
-import { useCurrentLobbyContext } from '../contexts/CurrentLobbyContext'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { WaitingRoom } from '../components/WaitingRoom'
+import { SkullKing } from '../components/skullKing/SkullKing'
 import { useSocketContext } from '../contexts/SocketContext'
-import { Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
 
 export default function CurrentLobby() {
-  const { currentLobby } = useCurrentLobbyContext()
+  const [isWaitingForPlayersToJoin, setIsWaitingForPlayersToJoin] = useState(true)
   const { socket } = useSocketContext()
 
   useEffect(() => {
-    // In case of navigation using
-    socket.emit('req-update-lobby')
-  }, [socket])
+    socket.on('res-start-game', stopWaitingAndStartGame)
+    return () => {
+      socket.off('res-start-game', stopWaitingAndStartGame)
+    }
+  })
 
-  return currentLobby == undefined ? (
-    <Navigate to={'/'} replace />
-  ) : (
-    <>
-      <h1>{currentLobby.name}</h1>
-      {currentLobby.isPublic ? <div>- Public -</div> : <div>- Private -</div>}
-      {currentLobby.isPublic ? (
-        <div></div>
+  function stopWaitingAndStartGame(){
+    setIsWaitingForPlayersToJoin(false)
+  }
+
+  function handleClickStartGame() {
+    socket.emit('req-start-game')
+  }
+
+
+  return (<>
+    {
+      isWaitingForPlayersToJoin ? (
+        <>
+          <WaitingRoom />
+          <button onClick={handleClickStartGame}>Start game</button>
+        </>
       ) : (
-        <div>
-          <b>Invitation code: {currentLobby.id}</b>
-        </div>
-      )}
-      <section>
-        <h3>Joueurs dans le lobby:</h3>
-        <ul>
-          {currentLobby.users.length > 0 ? (
-            currentLobby.users.map((user, index) => (
-              <li key={index}>{user.username}</li>
-            ))
-          ) : (
-            <div>No player found... There might be an error somewhere</div>
-          )}
-        </ul>
-      </section>
-      <section>
-        <h3>Messages</h3>
-      </section>
+        <SkullKing />
+      )
+    }
+  </>
 
-      <Link to={'/'}>retour</Link>
-    </>
   )
 }

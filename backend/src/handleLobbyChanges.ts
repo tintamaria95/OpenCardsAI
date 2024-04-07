@@ -2,7 +2,7 @@ import { LobbyBackType, UserBackType } from './types'
 import { Socket } from 'socket.io'
 import { Server } from 'socket.io'
 import { InMemoryLobbiesStore } from './lobbyStore'
-import logger from './logger'
+import {lobbyLogger} from './logger'
 import { InMemorySessionsStore } from './sessionStore'
 
 export const ROOMPUBLICLOBBY = 'publiclobby'
@@ -15,7 +15,7 @@ export function handleUserJoinsLobby(
 ) {
   const updatedLobby = lobbyStore.addUserToLobby(user, lobbyId)
   if (updatedLobby === undefined) {
-    logger.undefinedLobby(lobbyId)
+    lobbyLogger.undefinedLobby(lobbyId)
   } else {
     io.to(lobbyId).emit('update-lobby', updatedLobby)
     if (updatedLobby.isPublic) {
