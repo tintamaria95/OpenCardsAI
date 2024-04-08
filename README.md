@@ -1,4 +1,4 @@
-## OpenCardsAI (Temorary name)
+## OpenCardsAI (provisional name)
 
 The application can be found on the [OpenCardGames](https://www.opencardgames.martinld.fr) website. Being under construction, the service is only ready for some private beta demos.
 
