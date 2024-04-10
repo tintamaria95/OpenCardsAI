@@ -15,7 +15,10 @@ export class PlayerSK extends Player{
     this.contract = -1
   }
 
-
+  getCards(){
+    return this.cards
+  }
+  
   getGameScore(){
     return this.gameScore
   }

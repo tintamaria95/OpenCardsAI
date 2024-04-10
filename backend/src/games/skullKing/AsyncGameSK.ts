@@ -4,6 +4,7 @@ import { PlayerSK } from './PlayerSK'
 import { PileSK } from './PileSK'
 import { gameLogger } from '../../logger'
 import { AsyncGame } from '../commonClasses/AsyncGame'
+import { CardSK, skColors } from './CardSK'
 
 export type ActionSetContract = {
     type: "setContract",
@@ -104,7 +105,7 @@ export class AsyncGameSK extends AsyncGame {
             nbTricks: this.getNbTricks(),
             scores: this.getScores(),
             // Private information
-            playerHand: this.getPlayerCards(playerId)
+            playerHand: this.getPlayerCardIds(playerId)
 
         }
     }
@@ -147,31 +148,35 @@ export class AsyncGameSK extends AsyncGame {
         return scores
     }
 
+    private getPlayer(index: number){
+        return this.state.players[index]
+    }
+
     public getPlayerContract(id: string){
         const index = this.id2Index.get(id)
         if(index !== undefined){
-            return this.state.players[index].getContract()
+            return this.getPlayer(index).getContract()
         }
     }
 
     public getPlayerNbTricks(id: string){
         const index = this.id2Index.get(id)
         if(index !== undefined){
-            return this.state.players[index].getWonTricks()
+            return this.getPlayer(index).getWonTricks()
         }
     }
 
     public getPlayerScore(id: string){
         const index = this.id2Index.get(id)
         if(index !== undefined){
-            return this.state.players[index].getGameScore()
+            return this.getPlayer(index).getGameScore()
         }
     }
 
-    public getPlayerCards(id: string){
+    public getPlayerCardIds(id: string){
         const index = this.id2Index.get(id)
         if(index !== undefined){
-            return this.state.players[index].getHand()
+            return this.getPlayer(index).getCardIds()
         } else{
             gameLogger.error(`Id '${id}' undefined in id2Index object. Cannot return player hand (returned empty array).`)
             return []
@@ -267,17 +272,20 @@ export class AsyncGameSK extends AsyncGame {
     }
 
     private actionPlayCard(action: ActionPlayCard, playerIndex: number) {
-        const player = this.state.players[playerIndex]
-        const cardIndexInHand = player.getPlayerCardIndex(action['cardId'])
+        const player = this.getPlayer(playerIndex)
+        const cardIndexInHand = player.getCardIndex(action['cardId'])
+        cardIndexInHand !== -1
         if (cardIndexInHand !== -1) {
-            const chosenCard = player.playCard(cardIndexInHand)
-            gameLogger.debug(`'${player.getId()}' played ${chosenCard.id}`)
-            this.state.pile.addCard(chosenCard)
-            return true
+            if (this.isPlayerAllowedToPlayCardInPile(action['cardId'], player, this.state.pile.getTrickColor())) {
+                const chosenCard = player.playCard(cardIndexInHand)
+                gameLogger.debug(`'${player.getId()}' played ${chosenCard.id}`)
+                this.state.pile.addCard(chosenCard)
+                return true
+            }
         } else {
             gameLogger.warn(`'${this.state.players[playerIndex].getId()}'cannot play card of index '${action}'`)
-            return false
         }
+        return false
     }
 
     /**
@@ -298,8 +306,8 @@ export class AsyncGameSK extends AsyncGame {
 
     private endTrick() {
         // this.pile.show()
-        gameLogger.debug('winning card: ' + this.state.pile.getWinningCardIndex().toString())
-        this.state.trickFirstPlayerIndex = (this.state.trickFirstPlayerIndex + this.state.pile.getWinningCardIndex()) % this.state.nbPlayers
+        gameLogger.debug('winning card: ' + this.state.pile.getCurrentWinningCardIndex().toString())
+        this.state.trickFirstPlayerIndex = (this.state.trickFirstPlayerIndex + this.state.pile.getCurrentWinningCardIndex()) % this.state.nbPlayers
         gameLogger.debug('Trick winner: ' + this.state.players[this.state.trickFirstPlayerIndex].getId())
         this.state.players[this.state.trickFirstPlayerIndex].incrementWonTricks()
         this.state.players[this.state.trickFirstPlayerIndex].addToBonusPoints(this.state.pile.getBonusPoints())
@@ -366,9 +374,25 @@ export class AsyncGameSK extends AsyncGame {
     }
 
     /**
-     * Check if a player has the right to play a specific card in the Pile. In Skull King, a player must play the color announced first if he has it in hand. The rules say that the player can avoid following this rule if the card that he wants to play is a "special card" (pirate or escape for example). 
+     * Return the cards that a player can play from his hand to the Pile (among all cards that he has in his hand). In Skull King, a player must play the color announced first if he has it in hand. The rules say that the player can avoid following this rule if the card that he wants to play is a "special card" (pirate or escape for example). 
      */
-    private isCardPlayableInPile(cardId: string){
-        
+    private getPlayerPlayableCards(player: PlayerSK, trickColor?: skColors){
+        const colorsInHand = player.getCards().map(card => card.color)
+        if(colorsInHand.includes(trickColor) && trickColor !== undefined){
+            const playableCards: CardSK[] = []
+            player.getCards().forEach(card => {
+                if (card.color === trickColor || card.category === 'character' || card.category === 'escape'){
+                    playableCards.push(card)
+                }
+            })
+            return playableCards
+        }
+        return player.getCards()
+    }
+
+
+    private isPlayerAllowedToPlayCardInPile(cardId: string, player: PlayerSK, trickColor?: skColors) {
+        const playableCardIds: string[] = this.getPlayerPlayableCards(player, trickColor).map(card => card.id)
+        return playableCardIds.includes(cardId)
     }
 }

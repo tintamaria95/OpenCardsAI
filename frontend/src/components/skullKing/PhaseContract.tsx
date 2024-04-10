@@ -14,7 +14,7 @@ export function PhaseContract({maxContractValue, playerHand}: PhaseContractProp)
     
     return (
         <>
-        <section>
+            <section>
                 <h3>Cards in Hand</h3>
                 <ul>
                     {playerHand.map((card, index) => (
@@ -22,11 +22,14 @@ export function PhaseContract({maxContractValue, playerHand}: PhaseContractProp)
                     ))}
                 </ul>
             </section>
-        <ul>
-            {Array.from({length: maxContractValue + 1}, (_, index) => {
-                return (<li key={index} onClick={() => handleClick(index)}>{index}</li>)
-            })}
-        </ul>
+            <section>
+                <h3>Click on the contract value you seek to respect</h3>
+                <ul>
+                    {Array.from({ length: maxContractValue + 1 }, (_, index) => {
+                        return (<li key={index} onClick={() => handleClick(index)}>{index}</li>)
+                    })}
+                </ul>
+            </section>
         </>
     )
 }

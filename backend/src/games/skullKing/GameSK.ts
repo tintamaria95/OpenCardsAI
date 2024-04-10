@@ -82,8 +82,8 @@ export class GameSK extends Game {
         pile.addCard(chosenCard)
       }
       pile.show()
-      gameLogger.debug('winning card: ' + pile.getWinningCardIndex().toString())
-      this.trick_winner_index = (this.trick_winner_index + pile.getWinningCardIndex()) % this.nb_players
+      gameLogger.debug('winning card: ' + pile.getCurrentWinningCardIndex().toString())
+      this.trick_winner_index = (this.trick_winner_index + pile.getCurrentWinningCardIndex()) % this.nb_players
       gameLogger.debug('trick winner: ' + (this.trick_winner_index.toString()))
       this.players[this.trick_winner_index].incrementWonTricks()
       this.players[this.trick_winner_index].addToBonusPoints(pile.getBonusPoints())
