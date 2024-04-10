@@ -32,7 +32,7 @@ export class Pile {
     gameLogger.debug('------')
   }
 
-  getWinningCardIndex() {
+  getCurrentWinningCardIndex() {
     return this.currentWinnningCardIndex
   }
 

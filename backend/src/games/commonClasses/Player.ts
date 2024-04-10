@@ -19,7 +19,11 @@ export class Player {
     return this.username
   }
 
-  getHand(){
+  getCards(){
+    return this.cards
+  }
+
+  getCardIds(){
     const hand: string[] = []
     this.cards.forEach(card => {
       hand.push(card.id)})
@@ -44,8 +48,8 @@ export class Player {
    * @param cardId The card id of the Card object
    * @returns the index of the card in the hand. If not in the hand, returns -1
    */
-  getPlayerCardIndex(cardId: string){
-    const hand = this.getHand()
+  getCardIndex(cardId: string){
+    const hand = this.getCardIds()
     if (hand.includes(cardId)){
       return hand.indexOf(cardId)
     }

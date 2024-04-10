@@ -1,5 +1,5 @@
 import { gameLogger } from '../../logger'
-import { CardSK } from './CardSK'
+import { CardSK, skColors } from './CardSK'
 import { Pile } from '../commonClasses/Pile'
 
 /**
@@ -14,6 +14,8 @@ export class PileSK extends Pile {
   private skullKingCardIndex = -1
   private mermaidCardIndex = -1
 
+  private trickColor?: skColors = undefined
+
   private bonusPointsconfig = {
     captureMermaid: 0,
     capturePirate: 30,
@@ -24,11 +26,33 @@ export class PileSK extends Pile {
     return this.trickBonusPoints
   }
 
+  public getTrickColor(){
+    return this.trickColor
+  }
+
+  /**
+   * This function attaches to the pile the information of the color played by the first player. It must be called only if a color is played as the first card or after first card(s) being "escape(s)".
+   */
+  private setTrickColor(color: skColors | undefined){
+    this.trickColor = color
+  }
+
+  getCurrentWinningCardIndex(){
+    // Case where Only 'escape' cards have been played, the first 'escape' wins
+    if (this.pile.length > 0 && this.currentWinnningCardIndex === -1){
+      return 0
+    }
+    return this.currentWinnningCardIndex
+  }
+
 
   addCard(card: CardSK) {
     this.pile.push(card)
-    if (this.currentWinnningCardIndex === -1) {
-      this.currentWinnningCardIndex = 0
+    if (this.currentWinnningCardIndex === -1 && card.category !== 'escape') {
+        this.currentWinnningCardIndex = 0
+        if(card.category === 'black' || card.category === 'yrbColor'){
+          this.setTrickColor(card.color)
+        }
     } else {
       this.updateWinningCardIndex()
     }
@@ -46,12 +70,12 @@ export class PileSK extends Pile {
       // No need to check winning card if trio is in trick -> winning card is always Mermaid and should have been set as 'mermaid' card already
       if (!this.isAllTrioPlayed()) {
         const index = this.getUpdatedWinningCardIndex(
-          this.currentWinnningCardIndex,
+          this.getCurrentWinningCardIndex(),
           this.pile.length - 1
         )
         if (index === -1) {
           throw new Error(
-            'index of winning card must not be -1. Error in getWinningCardIndex'
+            'index of winning card must not be -1. Error in getCurrentWinningCardIndex'
           )
         }
         this.currentWinnningCardIndex = index
