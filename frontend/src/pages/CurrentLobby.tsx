@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { WaitingRoom } from '../components/WaitingRoom'
 import { SkullKing } from '../components/skullKing/SkullKing'
 import { useSocketContext } from '../contexts/SocketContext'
+import { Navigate } from 'react-router-dom'
+import { useCurrentLobbyContext } from '../contexts/CurrentLobbyContext'
 
 export default function CurrentLobby() {
-  const [isWaitingForPlayersToJoin, setIsWaitingForPlayersToJoin] = useState(true)
   const { socket } = useSocketContext()
+  const { currentLobby } = useCurrentLobbyContext()
+  const [isWaitingForPlayersToJoin, setIsWaitingForPlayersToJoin] = useState(!currentLobby?.isGameStarted)
 
   useEffect(() => {
     socket.on('res-start-game', stopWaitingAndStartGame)
@@ -14,7 +17,7 @@ export default function CurrentLobby() {
     }
   })
 
-  function stopWaitingAndStartGame(){
+  function stopWaitingAndStartGame() {
     setIsWaitingForPlayersToJoin(false)
   }
 
@@ -23,18 +26,22 @@ export default function CurrentLobby() {
   }
 
 
-  return (<>
-    {
-      isWaitingForPlayersToJoin ? (
-        <>
-          <WaitingRoom />
-          <button onClick={handleClickStartGame}>Start game</button>
-        </>
-      ) : (
-        <SkullKing />
-      )
-    }
-  </>
+  return currentLobby == undefined
+    ? (
+      <Navigate to={'/'} replace />
+    ) : (
+      <>
+        {
+          isWaitingForPlayersToJoin ? (
+            <>
+              <WaitingRoom />
+              <button onClick={handleClickStartGame}>Start game</button>
+            </>
+          ) : (
+            <SkullKing />
+          )
+        }
+      </>
 
-  )
+    )
 }

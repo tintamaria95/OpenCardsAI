@@ -1,6 +1,7 @@
 import winston from 'winston'
 import * as dotenv from 'dotenv'
-import { LobbyBackType, UserBackType } from './types'
+import { Lobby } from './lobby/Lobby'
+import { User } from './lobby/User'
 import * as fs from 'fs'
 
 dotenv.config()
@@ -44,13 +45,13 @@ export class MainLogger {
   }
 
   // Middleware
-  showSessionId(sessionId: UserBackType['sessionId']) {
+  showSessionId(sessionId: User['sessionId']) {
     this.logger.debug(`Middleware: User sessionId: ${sessionId}`)
   }
 
   confirmSessionIdInSessionStore(
-    userId: UserBackType['userId'],
-    username: UserBackType['username']
+    userId: User['userId'],
+    username: User['username']
   ) {
     this.logger.debug(`Middleware: sessionId is in sessionStore:
       -> userId: ${userId}
@@ -62,9 +63,9 @@ export class MainLogger {
   }
 
   createdNewSession(
-    sessionId: UserBackType['sessionId'],
-    userId: UserBackType['userId'],
-    username: UserBackType['username']
+    sessionId: User['sessionId'],
+    userId: User['userId'],
+    username: User['username']
   ) {
     this.logger.debug(`Middleware: Created new session:
       -> sessionId: ${sessionId}
@@ -74,66 +75,67 @@ export class MainLogger {
 
   // After Connection
 
-  userConnected(sessionId: UserBackType['sessionId']) {
+  userConnected(sessionId: User['sessionId']) {
     this.logger.debug(`User connected | sessionId: ${sessionId}`)
   }
 
-  userDisconnected(sessionId: UserBackType['sessionId']) {
+  userDisconnected(sessionId: User['sessionId']) {
     this.logger.debug(`User disconnected | sessionId: ${sessionId}`)
   }
 
   userUpdatedUsername(
-    sessionId: UserBackType['sessionId'],
-    newUsername: UserBackType['username']
+    sessionId: User['sessionId'],
+    newUsername: User['username']
   ) {
     this.logger.debug(
       `User updated username: ${newUsername} | sessionId: ${sessionId}`
     )
   }
 
-  addUserToLobby(
-    sessionId: UserBackType['sessionId'],
-    lobbyId: LobbyBackType['id']
-  ) {
-    this.logger.debug(
-      `Called addUserToLobby function | sessionId: ${sessionId} | lobbyId: ${lobbyId}`
-    )
-  }
   removeUserFromLobby(
-    sessionId: UserBackType['sessionId'],
-    lobbyId: LobbyBackType['id']
+    sessionId: User['sessionId'],
+    lobbyId: Lobby['id']
   ) {
     this.logger.debug(
       `Called removeUserFromLobby function | sessionId: ${sessionId} | lobbyId: ${lobbyId}`
     )
   }
   removedUserFromLobby(
-    sessionId: UserBackType['sessionId'],
-    lobbyId: LobbyBackType['id']
+    sessionId: User['sessionId'],
+    lobbyId: Lobby['id']
   ) {
     this.logger.debug(
-      `User with sessionId "${sessionId}" has been removed from lobby with id "${lobbyId}"`
+      `User has been removed from lobby with id "${lobbyId}"| sessionId "${sessionId}"`
+    )
+  }
+
+  replacedUserByBot(
+    sessionId: User['sessionId'],
+    lobbyId: Lobby['id']
+  ) {
+    this.logger.debug(
+      `User has been replaced by a bot in lobby with id "${lobbyId}"| sessionId "${sessionId}"`
     )
   }
 
   // Warnings
   userAlreadyInLobby(
-    sessionId: UserBackType['sessionId'],
-    lobbyId: LobbyBackType['id']
+    sessionId: User['sessionId'],
+    lobbyId: Lobby['id']
   ) {
     this.logger.warn(
       `User with sessionId "${sessionId}" already in lobby with id "${lobbyId}".`
     )
   }
   userNotInLobby(
-    sessionId: UserBackType['sessionId'],
-    lobbyId: LobbyBackType['id']
+    sessionId: User['sessionId'],
+    lobbyId: Lobby['id']
   ) {
     this.logger.warn(
       `User with sessionId "${sessionId}" not in lobby with id "${lobbyId}".`
     )
   }
-  undefinedLobby(lobbyId: LobbyBackType['id'] | undefined) {
+  undefinedLobby(lobbyId: Lobby['id'] | undefined) {
     if (lobbyId == undefined) {
       this.logger.warn('LobbyId is undefined.')
     } else {
@@ -141,13 +143,13 @@ export class MainLogger {
     }
   }
 
-  undefinedGame(lobbyId: LobbyBackType['id']){
+  undefinedGame(lobbyId: Lobby['id']){
     this.logger.warn(`Lobby with id '${lobbyId}' has an undefined 'game' property.`)
   }
 
   // Errors
 
-  sessionNotFound(sessionId: UserBackType['sessionId']) {
+  sessionNotFound(sessionId: User['sessionId']) {
     this.logger.error(`Session not found | sessionId: ${sessionId}`)
   }
 }

@@ -17,6 +17,7 @@ import PrivateLobby from '../pages/PrivateLobby'
 import socket from '../socket'
 import { CurrentLobbyContextProvider } from '../contexts/CurrentLobbyContextProvider'
 import { GlobalErrorElement } from '../components/GlobalErrorElement'
+import { useCurrentLobbyContext } from '../contexts/CurrentLobbyContext'
 
 function Root() {
   return (
@@ -40,7 +41,9 @@ function App() {
 }
 
 function Menu() {
+  const { setCurrentLobby } = useCurrentLobbyContext()
   useEffect(() => {
+    setCurrentLobby(undefined)
     socket.emit('join-menu')
   }, [])
   return <Outlet />
