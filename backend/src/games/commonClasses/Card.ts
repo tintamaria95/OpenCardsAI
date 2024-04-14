@@ -1,16 +1,23 @@
 export class Card {
-  readonly value: any
-  readonly color?: any
   readonly id: string
+  readonly value: number | string
+  readonly color?: string
+  
 
-  constructor(value: any, color: any){
+  constructor(value: number | string, color?: string, id?: string){
     this.value = value
     this.color = color
-    if (color !== undefined) {
-      this.id = value.toString() + color
+
+    if (id !== undefined){
+      this.id = id
     } else {
-      this.id = value.toString()
+      if (color !== undefined) {
+        this.id = value.toString() + color
+      } else {
+        this.id = value.toString()
+      }
     }
+    
   }
 
   getId(){

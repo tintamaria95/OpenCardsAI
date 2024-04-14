@@ -1,5 +1,4 @@
-import { gameLogger } from '../../logger'
-import { CardSK, skColors } from './CardSK'
+import { CardSK, SkColors } from './CardSK'
 import { Pile } from '../commonClasses/Pile'
 
 /**
@@ -14,7 +13,7 @@ export class PileSK extends Pile {
   private skullKingCardIndex = -1
   private mermaidCardIndex = -1
 
-  private trickColor?: skColors = undefined
+  private trickColor?: SkColors = undefined
 
   private bonusPointsconfig = {
     captureMermaid: 0,
@@ -33,7 +32,7 @@ export class PileSK extends Pile {
   /**
    * This function attaches to the pile the information of the color played by the first player. It must be called only if a color is played as the first card or after first card(s) being "escape(s)".
    */
-  private setTrickColor(color: skColors | undefined){
+  private setTrickColor(color: SkColors | undefined){
     this.trickColor = color
   }
 

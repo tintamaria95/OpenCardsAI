@@ -4,7 +4,7 @@ import { PlayerSK } from './PlayerSK'
 import { PileSK } from './PileSK'
 import { gameLogger } from '../../logger'
 import { AsyncGame } from '../commonClasses/AsyncGame'
-import { CardSK, skColors } from './CardSK'
+import { CardSK, SkColors } from './CardSK'
 
 export type ActionSetContract = {
     type: "setContract",
@@ -235,7 +235,7 @@ export class AsyncGameSK extends AsyncGame {
         }
         if (action['type'] === 'setContract') {
             if (this.actionSetContract(action, playerIndex)) {
-                gameLogger.debug(`Player '${playerId}' sets contracts = ${action}`)
+                gameLogger.debug(`Player '${playerId}' sets contracts = ${action['contractValue']}`)
                 if (this.isAllContractsSet()) {
                     this.possibleActions.clear()
                     this.possibleActions.add('playCard')
@@ -249,14 +249,12 @@ export class AsyncGameSK extends AsyncGame {
                     gameLogger.debug(`Trick ${this.state.trickIndex + 1} ended`)
                     this.endTrick()
                 } else {
-                    this.waitForNextPlayer()
+                    this.setForNextPlayer()
                 }
             }
         
         } else if (action['type'] === 'chooseScaryMaryType') {
             // TODO
-        } else {
-            throw new Error(`Unknown action type: ${action['type']}`)
         }
     }
 
@@ -266,7 +264,7 @@ export class AsyncGameSK extends AsyncGame {
             this.possiblePlayerIds.delete(this.state.players[playerIndex].getId())
             return true
         } else {
-            gameLogger.warn(`Cannot set a contract of value '${action}' at round ${this.state.roundIndex}`)
+            gameLogger.warn(`Cannot set a contract of value '${action['contractValue']}' at round ${this.state.roundIndex}`)
             return false
         }
     }
@@ -283,16 +281,21 @@ export class AsyncGameSK extends AsyncGame {
                 return true
             }
         } else {
-            gameLogger.warn(`'${this.state.players[playerIndex].getId()}'cannot play card of index '${action}'`)
+            gameLogger.warn(`'${this.state.players[playerIndex].getId()}'cannot play card of id '${action['cardId']}'`)
         }
         return false
     }
 
+    // private actionChooseScaryMaryType(action: ActionChooseScaryMaryType, playerIndex: number) {
+    //     const player = this.getPlayer(playerIndex)
+    //     //TODO
+    // }
+
     /**
      * This methods updates the class variables to allow the next player to do an action.
      */
-    private waitForNextPlayer() {
-        const currentPlayerId = this.possiblePlayerIds.values().next().value
+    private setForNextPlayer() {
+        const currentPlayerId = [...this.possiblePlayerIds][0]
         const currentPlayerIndex = this.id2Index.get(currentPlayerId)
         if (currentPlayerIndex === undefined) {
             gameLogger.error(`Unknown player Id '${currentPlayerId}'`)
@@ -365,10 +368,10 @@ export class AsyncGameSK extends AsyncGame {
     }
 
     private distributeCardsToPlayers() {
-        const round_cards = this.deck.getCards(this.state.nbPlayers * this.state.roundIndex)
-        for (let p_i = 0; p_i < this.state.nbPlayers; p_i++) {
-            this.state.players[p_i].setCards(
-                round_cards.slice(p_i * this.state.roundIndex, p_i * this.state.roundIndex + this.state.roundIndex)
+        const roundCards = this.deck.getCards(this.state.nbPlayers * this.state.roundIndex)
+        for (let playerIndex = 0; playerIndex < this.state.nbPlayers; playerIndex++) {
+            this.state.players[playerIndex].setCards(
+                roundCards.slice(playerIndex * this.state.roundIndex, playerIndex * this.state.roundIndex + this.state.roundIndex)
             )
         }
     }
@@ -376,7 +379,7 @@ export class AsyncGameSK extends AsyncGame {
     /**
      * Return the cards that a player can play from his hand to the Pile (among all cards that he has in his hand). In Skull King, a player must play the color announced first if he has it in hand. The rules say that the player can avoid following this rule if the card that he wants to play is a "special card" (pirate or escape for example). 
      */
-    private getPlayerPlayableCards(player: PlayerSK, trickColor?: skColors){
+    private getPlayerPlayableCards(player: PlayerSK, trickColor?: SkColors){
         const colorsInHand = player.getCards().map(card => card.color)
         if(colorsInHand.includes(trickColor) && trickColor !== undefined){
             const playableCards: CardSK[] = []
@@ -391,7 +394,7 @@ export class AsyncGameSK extends AsyncGame {
     }
 
 
-    private isPlayerAllowedToPlayCardInPile(cardId: string, player: PlayerSK, trickColor?: skColors) {
+    private isPlayerAllowedToPlayCardInPile(cardId: string, player: PlayerSK, trickColor?: SkColors) {
         const playableCardIds: string[] = this.getPlayerPlayableCards(player, trickColor).map(card => card.id)
         return playableCardIds.includes(cardId)
     }

@@ -19,7 +19,7 @@ export function updateUsername(
   lobbyLogger.userUpdatedUsername(session.sessionId, username)
 }
 
-export async function joinMenu(
+export function joinMenu(
   io: Server,
   socket: Socket,
   lobbyStore: InMemoryLobbiesStore,

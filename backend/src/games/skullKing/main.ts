@@ -11,8 +11,8 @@ const nbTests = 1
 bar.start(nbTests, 1)
 
 // Simulate game with random actions for players
-for (let test_i = 0; test_i < nbTests; test_i++) {
-  bar.update(test_i + 1)
+for (let index = 0; index < nbTests; index++) {
+  bar.update(index + 1)
   const deck = new DeckSK()
 
   const player1 = new PlayerSK('1', 'martin')
@@ -22,19 +22,19 @@ for (let test_i = 0; test_i < nbTests; test_i++) {
   const game = new AsyncGameSK([player1, player2, player4, player5], deck)
 
   for (let round = 1; round < (game.getRoundIndex() + 1); round++) {
-    game.updateState("setContract", randomInt(round + 1), 'martin')
-    game.updateState("setContract", randomInt(round + 1), 'charles')
-    game.updateState("setContract", randomInt(round + 1), 'lucas')
-    game.updateState("setContract", randomInt(round + 1), 'max')
+    game.updateState({type: "setContract", contractValue: randomInt(round + 1)}, 'martin')
+    game.updateState({type: "setContract", contractValue: randomInt(round + 1)}, 'charles')
+    game.updateState({type: "setContract", contractValue: randomInt(round + 1)}, 'lucas')
+    game.updateState({type: "setContract", contractValue: randomInt(round + 1)}, 'max')
     for (let i = 0; i < round; i++) {
-      game.updateState("playCard", randomInt(round - i), 'martin')
-      game.updateState("playCard", randomInt(round - i), 'charles')
-      game.updateState("playCard", randomInt(round - i), 'max')
-      game.updateState("playCard", randomInt(round - i), 'lucas')
-      game.updateState("playCard", randomInt(round - i), 'martin')
-      game.updateState("playCard", randomInt(round - i), 'charles')
-      game.updateState("playCard", randomInt(round - i), 'max')
-      game.updateState("playCard", randomInt(round - i), 'lucas')
+      game.updateState({type:"playCard", cardId: 'blue3'}, 'martin')
+      // game.updateState("playCard", randomInt(round - i), 'charles')
+      // game.updateState("playCard", randomInt(round - i), 'max')
+      // game.updateState("playCard", randomInt(round - i), 'lucas')
+      // game.updateState("playCard", randomInt(round - i), 'martin')
+      // game.updateState("playCard", randomInt(round - i), 'charles')
+      // game.updateState("playCard", randomInt(round - i), 'max')
+      // game.updateState("playCard", randomInt(round - i), 'lucas')
     }
   }
 }

@@ -67,7 +67,7 @@ io.use((socket, next) => {
   checkSessionId(socket, sessionStore, next)
 })
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   const sessionId = socket.handshake.auth.sessionId as string
   lobbyLogger.userConnected(sessionId)
 
@@ -77,7 +77,7 @@ io.on('connection', (socket) => {
     return Error('Session not found')
   }
 
-  socket.join(session.sessionId)
+  await socket.join(session.sessionId)
   io.to(socket.id).emit('session', session)
 
   socket.onAny((event) => {
@@ -88,7 +88,7 @@ io.on('connection', (socket) => {
     updateUsername(username, sessionStore, session)
   )
 
-  socket.on('join-menu', () => {
+  socket.on('join-menu',  () => {
     joinMenu(io, socket, lobbyStore, session)
   })
 

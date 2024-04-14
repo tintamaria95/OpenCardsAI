@@ -3,8 +3,6 @@ import { User } from './User'
 import { Socket } from 'socket.io'
 import { Server } from 'socket.io'
 import { InMemoryLobbiesStore } from './lobbyStore'
-import { InMemorySessionsStore } from './sessionStore'
-import { lobbyLogger } from '../logger'
 
 export const ROOMPUBLICLOBBY = 'publiclobby'
 
