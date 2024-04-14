@@ -1,5 +1,5 @@
 import { Deck } from '../commonClasses/Deck'
-import { CardSK, skColors } from './CardSK'
+import { CardSK, SkColors } from './CardSK'
 
 export class DeckSK extends Deck {
   declare protected deck: Array<CardSK>
@@ -11,8 +11,8 @@ export class DeckSK extends Deck {
 
   getSKCards() {
 
-    const colors: skColors[] = ['yellow', 'red', 'blue']
-    const oneColorCards = (color: skColors) =>
+    const colors: SkColors[] = ['yellow', 'red', 'blue']
+    const oneColorCards = (color: SkColors) =>
       Array.from({ length: 13 }, (_, i) => new CardSK('yrbColor', i + 1, color))
     const coloredCards = Array.from({ length: 3 }, (_, i) => [
       ...oneColorCards(colors[i])

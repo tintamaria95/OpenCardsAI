@@ -1,11 +1,11 @@
 import { Card } from "../commonClasses/Card"
 
-export type skColors = 'yellow' | 'red' | 'blue' | 'black'
+export type SkColors = 'yellow' | 'red' | 'blue' | 'black'
 type CardCategory = 'escape' | 'yrbColor' | 'black' | 'character'
 
 export class CardSK extends Card {
-  declare readonly value: number | 'escape' | 'pirate' | 'skullKing' | 'mermaid'
-  declare readonly color?: skColors
+  readonly value: number | 'escape' | 'pirate' | 'skullKing' | 'mermaid'
+  readonly color?: SkColors
   
   readonly category: CardCategory
   
@@ -19,7 +19,7 @@ export class CardSK extends Card {
   constructor( 
     category: CardCategory,
     value: number | 'escape' | 'pirate' | 'skullKing' | 'mermaid',
-    color?: skColors
+    color?: SkColors
   ) {
     super(value, color)
     if (
@@ -35,6 +35,8 @@ export class CardSK extends Card {
         'Card of category "character" must have a non-numeric field value'
       )
     }
+    this.value = value
+    this.color = color
     this.category = category
   }
 }

@@ -1,9 +1,9 @@
 type State = {
     nextPhase: string,
     possibleActions: string[],
-    dealer_score: number,
+    dealerScore: number,
     dealer_cards: Card[],
-    player_score: number,
+    playerScore: number,
     player_cards : Card[]
 }
 
@@ -15,33 +15,33 @@ class Card{
         this.value = value
     }
 
-    get_long_name(){
-        let long_color = ''
+    getLongName(){
+        let longColor = ''
         if (this.color === 'S'){
-            long_color = 'spades'
+            longColor = 'spades'
         } else if (this.color === 'H'){
-            long_color = 'hearts'
+            longColor = 'hearts'
         } else if (this.color === 'D'){
-            long_color = 'diamonds'
+            longColor = 'diamonds'
         } else if (this.color === 'C'){
-            long_color = 'clubs'
+            longColor = 'clubs'
         } else {
             throw new Error('Unknown color letter')
         }
 
-        let long_value = ''
+        let longValue = ''
         if (this.value === 'A'){
-            long_value = 'Ace'
+            longValue = 'Ace'
         } else if (this.value === 'K'){
-            long_value = 'King'
+            longValue = 'King'
         } else if (this.value === 'Q'){
-            long_value = 'Queen'
+            longValue = 'Queen'
         } else if (this.value === 'J'){
-            long_value = 'Jack'
+            longValue = 'Jack'
         } else {
-            long_value = this.value.toString()
+            longValue = this.value.toString()
         }
-        return long_value + ' of ' + long_color
+        return longValue + ' of ' + longColor
     }
 }
 
@@ -61,9 +61,9 @@ class BlackJack {
         this.state = {
             nextPhase: 'deal',
             possibleActions: [],
-            dealer_score: 0,
+            dealerScore: 0,
             dealer_cards: [],
-            player_score: 0,
+            playerScore: 0,
             player_cards: []
         }
         this.draw_index = 0
@@ -108,7 +108,7 @@ class BlackJack {
      return this.get_score(this.state.player_cards, true)   
     }
 
-    private get_player_max_score(){
+    private getPlayerMaxScore(){
         return this.get_score(this.state.player_cards, false)   
        }
 
@@ -210,23 +210,23 @@ class BlackJack {
             console.log('Dealer busts -> Player wins')
             this.state.nextPhase = 'ended'
         } else {
-            let player_score = 0
-            let dealer_score = 0
-            if (this.get_player_max_score() <= 21) {
-                player_score = this.get_player_max_score()
+            let playerScore = 0
+            let dealerScore = 0
+            if (this.getPlayerMaxScore() <= 21) {
+                playerScore = this.getPlayerMaxScore()
             } else {
-                player_score = this.get_player_min_score()
+                playerScore = this.get_player_min_score()
             }
             if (this.get_dealer_max_score() <= 21){
-                dealer_score = this.get_dealer_max_score()
+                dealerScore = this.get_dealer_max_score()
             } else {
-                dealer_score = this.get_dealer_min_score()
+                dealerScore = this.get_dealer_min_score()
             }
-            console.log('Player score: ' + player_score.toString())
-            console.log('Dealer score: ' + dealer_score.toString())
-            if (player_score > dealer_score){
+            console.log('Player score: ' + playerScore.toString())
+            console.log('Dealer score: ' + dealerScore.toString())
+            if (playerScore > dealerScore){
                 console.log('Player wins !')
-            } else if (player_score < dealer_score){
+            } else if (playerScore < dealerScore){
                 console.log('Dealer wins !')
             } else {
                 console.log('Tie, it is a push !')
@@ -246,21 +246,16 @@ class BlackJack {
         }
     }
 
-    play_action(playerId: number, action: string, value: number) {
-
-    }
-
-    shuffle_cards(){
-        const shuffled_cards = [...this.cards]
-        this.cards =  shuffled_cards.sort(() => Math.random() - 0.5)
+    shuffleCards(){
+        const shuffledCards = [...this.cards]
+        this.cards =  shuffledCards.sort(() => Math.random() - 0.5)
     }
 }
 
-const v_cards = Array.from({length: 9}, (_, index) => index + 2)
-const colors = ['S', 'C', 'H', 'D']
-const h_cards = ['J', 'Q', 'K', 'A']
-const cards = Array.from({length: 4}, (_, index) => [...v_cards, ...h_cards]).flat()
-const colored_cards = Array.from({length: 52}, (_, index) => {
+const numberCards = Array.from({length: 9}, (_, index) => index + 2)
+const headCards = ['J', 'Q', 'K', 'A']
+const cards = Array.from({length: 4}, () => [...numberCards, ...headCards]).flat()
+const coloredCards = Array.from({length: 52}, (_, index) => {
     if (index < 13){
         return new Card('S', cards[index])
     } else if (index < 26){
@@ -272,8 +267,8 @@ const colored_cards = Array.from({length: 52}, (_, index) => {
     }
 })
 
-const bj = new BlackJack(colored_cards)
-bj.shuffle_cards()
+const bj = new BlackJack(coloredCards)
+bj.shuffleCards()
 bj.updateState()
 bj.updateState('hit')
 bj.updateState('stand')

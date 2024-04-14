@@ -51,6 +51,9 @@ export class Pile {
 
   protected getUpdatedWinningCardIndex(firstCardIndex: number, nextCardIndex: number) {
     // Overwrites this method to handle game logic
-    return -1
+    if (firstCardIndex > nextCardIndex) {
+      return firstCardIndex
+    }
+    return nextCardIndex
   }
 }
