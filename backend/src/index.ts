@@ -3,18 +3,18 @@ import { createServer } from 'http'
 import bodyParser from 'body-parser'
 import { Server } from 'socket.io'
 import * as path from 'path'
-import {lobbyLogger} from './logger'
-import { LobbyBackType } from './types'
-import { ROOMPUBLICLOBBY } from './handleLobbyChanges'
+import { lobbyLogger } from './logger'
+import { Lobby } from './lobby/Lobby'
+import { ROOMPUBLICLOBBY } from './lobby/handleLobbyChanges'
 import * as cors from 'cors'
-import { InMemorySessionsStore } from './sessionStore'
-import { InMemoryLobbiesStore } from './lobbyStore'
+import { InMemorySessionsStore } from './lobby/sessionStore'
+import { InMemoryLobbiesStore } from './lobby/lobbyStore'
 import { checkSessionId } from './websocket/middleware'
 import {
   disconnect,
   joinMenu,
   reqCreateLobby,
-  reqJoinLobby,
+  reqJoinLobby, 
   reqLobbyList,
   updateUsername
 } from './websocket/events'
@@ -64,7 +64,7 @@ app.get('/', (req: Request, res: Response) => {
 })
 
 io.use((socket, next) => {
-  checkSessionId(socket, sessionStore, lobbyLogger, next)
+  checkSessionId(socket, sessionStore, next)
 })
 
 io.on('connection', (socket) => {
@@ -85,11 +85,11 @@ io.on('connection', (socket) => {
   })
 
   socket.on('update-username', (username: string) =>
-    updateUsername(username, sessionStore, session, lobbyLogger)
+    updateUsername(username, sessionStore, session)
   )
 
-  socket.on('join-menu', () =>{
-    joinMenu(io, socket, lobbyStore, sessionStore, session)
+  socket.on('join-menu', () => {
+    joinMenu(io, socket, lobbyStore, session)
   })
 
   socket.on('join-publiclobby', async () => {
@@ -114,15 +114,14 @@ io.on('connection', (socket) => {
     )
   )
 
-  socket.on('req-join-lobby', (lobbyId: LobbyBackType['id']) =>
+  socket.on('req-join-lobby', (lobbyId: Lobby['id']) =>
     reqJoinLobby(
       lobbyId,
       io,
       socket,
       ROOMPUBLICLOBBY,
       lobbyStore,
-      session,
-      lobbyLogger
+      session
     )
   )
 
@@ -152,12 +151,14 @@ io.on('connection', (socket) => {
 
   socket.on('req-start-game', () => {
     const lobbyId = session.lobbyId
-    if (lobbyId !== undefined){
-      const lobby  = lobbyStore.getLobby(lobbyId)
-      if (lobby !== undefined){
-        const players: PlayerSK[] = []
-        lobby.users.forEach(user => {
-          players.push(new PlayerSK(user.sessionId, user.username))})
+    if (lobbyId !== undefined) {
+      const lobby = lobbyStore.getLobby(lobbyId)
+      if (lobby !== undefined) {
+        if (lobby.game !== undefined){
+          lobbyLogger.logger.debug(`Error: Game already started: Received request to start game in lobby with id "${lobbyId} | sessionId ${sessionId}"`)
+          return
+        }
+        const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.username))
         const deck = new DeckSK()
         const game = new AsyncGameSK(players, deck)
         lobby.game = game
@@ -167,7 +168,7 @@ io.on('connection', (socket) => {
   })
 
   socket.on('disconnect', () =>
-    disconnect(io, socket, lobbyStore, session, sessionStore, lobbyLogger)
+    disconnect(io, socket, lobbyStore, session)
   )
 })
 

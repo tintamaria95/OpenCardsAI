@@ -1,1 +1,3 @@
-export class AsyncGame {}
+export class AsyncGame {
+
+}

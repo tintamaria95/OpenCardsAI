@@ -1,4 +1,4 @@
-type UserFrontType = {
+export type UserFrontType = {
   sessionId?: string // private
   lobbyId?: string // private
   userId: string // public between users
@@ -6,31 +6,13 @@ type UserFrontType = {
   imageName: string
 }
 
-type LobbyFrontType = {
+export type LobbyFrontType = {
   id: string
   name: string
   isPublic: boolean
   users: UserFrontType[]
+  isGameStarted: boolean
 }
-
-type UserBackType = {
-  sessionId: string
-  userId: string
-  lobbyId: string | undefined
-  username: string
-  imageName: string
-  createdAt: number
-}
-
-type LobbyBackType = {
-  id: string
-  name: string
-  isPublic: boolean
-  createdAt: number
-  users: Map<UserBackType['sessionId'], UserBackType>
-}
-
-type LobbyStore = Map<LobbyBackType['id'], LobbyBackType>
 
 export type ActionsSK = 'setContract' | 'playCard'
 
@@ -47,11 +29,3 @@ export type PlayerFrontState = {
   playerHand: string[]
 }
 
-
-export type {
-  LobbyStore,
-  LobbyBackType,
-  UserBackType,
-  LobbyFrontType,
-  UserFrontType
-}
