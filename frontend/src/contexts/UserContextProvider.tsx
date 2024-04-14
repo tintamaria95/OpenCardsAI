@@ -1,7 +1,7 @@
 import { useState, ReactElement, useEffect } from 'react'
-import { UserBackType } from '../types'
 import { UserContext } from './UserContext'
 import { useSocketContext } from './SocketContext'
+import { UserFrontType } from '../types'
 
 function initFromStorage(key: string) {
   const value = localStorage.getItem(key)
@@ -21,7 +21,7 @@ export function UserContextProvider({ children }: { children: ReactElement }) {
   const { socket } = useSocketContext()
 
   useEffect(() => {
-    function setUserFromSession(user: UserBackType) {
+    function setUserFromSession(user: UserFrontType) {
       if (user.sessionId) {
         localStorage.setItem('sessionId', user.sessionId)
       } else {
