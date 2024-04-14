@@ -45,7 +45,7 @@ function Menu() {
   useEffect(() => {
     setCurrentLobby(undefined)
     socket.emit('join-menu')
-  }, [])
+  }, [setCurrentLobby])
   return <Outlet />
 }
 

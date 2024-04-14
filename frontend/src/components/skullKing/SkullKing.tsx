@@ -28,7 +28,7 @@ export function SkullKing() {
         return () => {
             socket.off('gameState', updateGameState)
         }
-    }, [])
+    }, [socket])
 
     function updateGameState(state: PlayerFrontState) {
         setState(state)
