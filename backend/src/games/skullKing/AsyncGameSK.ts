@@ -34,7 +34,9 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     private trickIndex: number
     private pile: PileSK
 
-    constructor(players: PlayerSK[], deck: DeckSK) {
+    private timer?: NodeJS.Timeout
+
+    constructor(players: PlayerSK[], deck: DeckSK, timerDuration?: number) {
         super(players, deck)
         this.players = players
         
@@ -55,6 +57,8 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         gameLogger.debug('- GAME STARTS -')
         gameLogger.debug(`Round first player: ${players[this.roundFirstPlayerIndex].getId()}`)
         this.distributeCardsToPlayers()
+        this.setTimer(timerDuration)
+        
     }
 
     public getPlayerState(playerId: string): PlayerFrontState {
@@ -139,6 +143,12 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         }
     }
 
+    private resetTimerForNextPlayer(){
+        if (this.timer !== undefined){
+            this.timer.refresh()
+        }
+    }
+
 
     /**
     * Returns the score for a given contract and the tricks that a player won during this round. The bonus points are added to the score if the player completed its contract. 
@@ -189,6 +199,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
                     this.possiblePlayerIds.add(this.players[this.roundFirstPlayerIndex].getId())
                     gameLogger.debug('All players have set their contracts. Next phase: PlayCard')
                 }
+                this.resetTimerForNextPlayer()
             }
         } else if (action['type'] === 'playCard') {
             if (this.actionPlayCard(action, player)) {
@@ -198,6 +209,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
                 } else {
                     this.setForNextPlayer()
                 }
+                this.resetTimerForNextPlayer()
             }
         } 
     }
@@ -371,5 +383,30 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     private isPlayerAllowedToPlayCardInPile(cardId: string, player: PlayerSK, trickColor?: SkColors) {
         const playableCardIds: string[] = this.getPlayerPlayableCards(player, trickColor).map(card => card.id)
         return playableCardIds.includes(cardId)
+    }
+
+    private setTimer(timerDuration?: number) {
+        if (timerDuration !== undefined && timerDuration > 0) {
+            gameLogger.info(`Set Timer of ${timerDuration} sec per player`)
+            this.timer = setTimeout(() => {
+                gameLogger.debug(`Time's up!`)
+                if (this.possibleActions.has('setContract')) {
+                    while (this.possibleActions.has('setContract')) {
+                        this.updateStateRandomly()
+                    }
+                } else {
+                    this.updateStateRandomly()
+                }
+            }, timerDuration * 1000)
+        }
+    }
+
+    private updateStateRandomly() {
+        const randomUpdate = this.getRandomPossibleAction()
+        if (randomUpdate !== undefined) {
+            this.updateState(randomUpdate.action, randomUpdate.playerId)
+        } else {
+            throw new Error('getRandomPossibleAction function returned an undefined object.')
+        }
     }
 }

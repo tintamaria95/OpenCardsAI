@@ -5,7 +5,6 @@ import { Lobby } from '../lobby/Lobby'
 import { User } from '../lobby/User'
 import { InMemoryLobbiesStore } from '../lobby/lobbyStore'
 import { handleUserLeftLobby } from '../lobby/handleLobbyChanges'
-import { AsyncGame } from '../games/commonClasses/AsyncGame'
 import { AsyncGameSK } from '../games/skullKing/AsyncGameSK'
 import { Action } from '../games/commonClasses/Action'
 
