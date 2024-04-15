@@ -5,6 +5,9 @@ import { Lobby } from '../lobby/Lobby'
 import { User } from '../lobby/User'
 import { InMemoryLobbiesStore } from '../lobby/lobbyStore'
 import { handleUserLeftLobby } from '../lobby/handleLobbyChanges'
+import { AsyncGame } from '../games/commonClasses/AsyncGame'
+import { AsyncGameSK } from '../games/skullKing/AsyncGameSK'
+import { Action } from '../games/commonClasses/Action'
 
 export function updateUsername(
   username: string,
@@ -19,7 +22,7 @@ export function updateUsername(
   lobbyLogger.userUpdatedUsername(session.sessionId, username)
 }
 
-export function joinMenu(
+export async function joinMenu(
   io: Server,
   socket: Socket,
   lobbyStore: InMemoryLobbiesStore,
@@ -53,11 +56,11 @@ export async function reqCreateLobby(
   const lobbyId = lobbyStore.saveLobby(session, lobbyName, isPublic)
   session.lobbyId = lobbyId
   const lobby = lobbyStore.getLobby(lobbyId)
-  if (lobby === undefined){
+  if (lobby === undefined) {
     lobbyLogger.undefinedLobby(lobbyId)
     return
   }
-  
+
   await socket.leave(ROOMPUBLICLOBBY)
   await socket.join(lobbyId)
 
@@ -109,4 +112,39 @@ export async function disconnect(
 ) {
   lobbyLogger.userDisconnected(session.sessionId)
   await handleUserLeftLobby(io, socket, lobbyStore, session)
+}
+
+/////////////////////////
+
+export function getSessionLobby(lobbyStore: InMemoryLobbiesStore, session: User){
+  const lobbyId = session.lobbyId
+    if (lobbyId == undefined) {
+      lobbyLogger.undefinedLobby(lobbyId)
+      return
+    }
+    const lobby = lobbyStore.getLobby(lobbyId)
+    if (lobby === undefined) {
+      lobbyLogger.undefinedLobby(lobbyId)
+      return
+    }
+    return lobby
+}
+export function getSessionGame(lobby: Lobby){
+    const game = lobby.game
+    if (game === undefined) {
+      lobbyLogger.undefinedGame(lobby.id)
+      return
+    }
+    return game
+}
+
+export function reqUpdateGameState(
+  io: Server,
+  lobby: Lobby,
+  game: AsyncGameSK,
+  sessionId: string,
+  action: Action
+) {
+  game.updateState(action, sessionId)
+  lobby.users.forEach(user => io.to(user.sessionId).emit('gameState', game.getPlayerState(user.sessionId)))
 }
