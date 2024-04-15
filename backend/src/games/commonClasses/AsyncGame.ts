@@ -36,12 +36,6 @@ export class AsyncGame {
     }
 
 
-    public setTimer(){
-        const timer = setTimeout(() => {
-            
-        }, 30);
-    }
-
     public isEnded(){
         return this.isGameEnded
     }

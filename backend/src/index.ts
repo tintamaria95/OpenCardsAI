@@ -92,8 +92,8 @@ io.on('connection', async (socket) => {
     updateUsername(username, sessionStore, session)
   )
 
-  socket.on('join-menu',  () => {
-    joinMenu(io, socket, lobbyStore, session)
+  socket.on('join-menu',  async () => {
+    await joinMenu(io, socket, lobbyStore, session)
   })
 
   socket.on('join-publiclobby', async () => {
@@ -106,8 +106,8 @@ io.on('connection', async (socket) => {
 
   socket.on('req-lobbylist', () => reqLobbyList(io, socket, lobbyStore))
 
-  socket.on('req-create-lobby', (lobbyName: string, isPublic: boolean) =>
-    reqCreateLobby(
+  socket.on('req-create-lobby', async (lobbyName: string, isPublic: boolean) =>
+    await reqCreateLobby(
       lobbyName,
       isPublic,
       io,
@@ -118,8 +118,8 @@ io.on('connection', async (socket) => {
     )
   )
 
-  socket.on('req-join-lobby', (lobbyId: Lobby['id']) =>
-    reqJoinLobby(
+  socket.on('req-join-lobby', async (lobbyId: Lobby['id']) =>
+    await reqJoinLobby(
       lobbyId,
       io,
       socket,
@@ -159,8 +159,8 @@ io.on('connection', async (socket) => {
     io.to(lobby.id).emit('res-start-game')
   })
 
-  socket.on('disconnect', () =>
-    disconnect(io, socket, lobbyStore, session)
+  socket.on('disconnect', async () =>
+    await disconnect(io, socket, lobbyStore, session)
   )
 })
 
