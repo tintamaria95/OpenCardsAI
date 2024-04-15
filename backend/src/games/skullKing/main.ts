@@ -7,7 +7,8 @@ import * as cliProgress from 'cli-progress'
 
 
 const bar = new cliProgress.SingleBar({}, cliProgress.Presets.rect)
-const nbTests = 1
+const nbTests = 1000
+console.time('executionTime')
 bar.start(nbTests, 1)
 
 // Simulate game with random actions for players
@@ -21,20 +22,14 @@ for (let index = 0; index < nbTests; index++) {
   const player5 = new PlayerSK('4', 'lucas')
   const game = new AsyncGameSK([player1, player2, player4, player5], deck)
 
-  for (let round = 1; round < (game.getRoundIndex() + 1); round++) {
-    game.updateState({type: "setContract", contractValue: randomInt(round + 1)}, 'martin')
-    game.updateState({type: "setContract", contractValue: randomInt(round + 1)}, 'charles')
-    game.updateState({type: "setContract", contractValue: randomInt(round + 1)}, 'lucas')
-    game.updateState({type: "setContract", contractValue: randomInt(round + 1)}, 'max')
-    for (let i = 0; i < round; i++) {
-      game.updateState({type:"playCard", cardId: 'blue3'}, 'martin')
-      // game.updateState("playCard", randomInt(round - i), 'charles')
-      // game.updateState("playCard", randomInt(round - i), 'max')
-      // game.updateState("playCard", randomInt(round - i), 'lucas')
-      // game.updateState("playCard", randomInt(round - i), 'martin')
-      // game.updateState("playCard", randomInt(round - i), 'charles')
-      // game.updateState("playCard", randomInt(round - i), 'max')
-      // game.updateState("playCard", randomInt(round - i), 'lucas')
+  while (!game.isEnded()) {
+    const update = game.getRandomPossibleAction()
+    if (update !== undefined) {
+      game.updateState(update.action, update.playerId)
+    } else {
+      throw new Error('Undefined updsate object')
     }
   }
 }
+
+console.timeEnd('executionTime')

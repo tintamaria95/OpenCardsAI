@@ -1,3 +1,4 @@
+import { ActionSetContract } from "../../action/ActionSK"
 import { useSocketContext } from "../../contexts/SocketContext"
 
 type PhaseContractProp = {
@@ -9,7 +10,11 @@ export function PhaseContract({maxContractValue, playerHand}: PhaseContractProp)
     const {socket} = useSocketContext()
 
         function handleClick(contractValue: number){
-            socket.emit('req-update-gameState', {type: 'setContract', contractValue: contractValue})
+            const action: ActionSetContract = {
+                type: "setContract",
+                contractValue: contractValue
+            }
+            socket.emit('req-update-gameState', action)
         }
     
     return (

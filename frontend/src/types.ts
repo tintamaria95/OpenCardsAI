@@ -1,3 +1,5 @@
+import { ActionSK } from "./action/ActionSK"
+
 export type UserFrontType = {
   sessionId?: string // private
   lobbyId?: string // private
@@ -14,12 +16,10 @@ export type LobbyFrontType = {
   isGameStarted: boolean
 }
 
-export type ActionsSK = 'setContract' | 'playCard'
-
 export type PlayerFrontState = {
   roundIndex: number,
-  roundFirstPlayerIndex: number,
-  possibleActions: ActionsSK[],
+  roundFirstPlayerIndex: number
+  possibleActions: ActionSK['type'][],
   possiblePlayers: string[],
   pileCards: string[],
   contracts: number[],

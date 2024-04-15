@@ -25,7 +25,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 fs.writeFileSync('game.log', '')
 const gameLogger = winston.createLogger({
-  level: 'debug',
+  level: 'error',
   format: winston.format.json(),
   transports: [
     new winston.transports.File({ filename: 'game.log', level: 'debug' })

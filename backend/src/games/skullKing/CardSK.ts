@@ -4,10 +4,10 @@ export type SkColors = 'yellow' | 'red' | 'blue' | 'black'
 type CardCategory = 'escape' | 'yrbColor' | 'black' | 'character'
 
 export class CardSK extends Card {
-  readonly value: number | 'escape' | 'pirate' | 'skullKing' | 'mermaid'
-  readonly color?: SkColors
+  declare value: number | 'escape' | 'pirate' | 'skullKing' | 'mermaid'
+  declare readonly color?: SkColors
   
-  readonly category: CardCategory
+  category: CardCategory
   
   static readonly categoryHierarchy: CardCategory[] = [
     'escape',
@@ -19,9 +19,10 @@ export class CardSK extends Card {
   constructor( 
     category: CardCategory,
     value: number | 'escape' | 'pirate' | 'skullKing' | 'mermaid',
-    color?: SkColors
+    color?: SkColors,
+    id?: string
   ) {
-    super(value, color)
+    super(value, color, id)
     if (
       (category === 'yrbColor' || category === 'black') &&
       typeof value !== 'number'
@@ -35,8 +36,6 @@ export class CardSK extends Card {
         'Card of category "character" must have a non-numeric field value'
       )
     }
-    this.value = value
-    this.color = color
     this.category = category
   }
 }

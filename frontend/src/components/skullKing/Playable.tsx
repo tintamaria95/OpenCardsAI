@@ -1,5 +1,6 @@
-import { ReactElement } from "react";
+import { ReactElement, useState } from "react";
 import { useSocketContext } from "../../contexts/SocketContext";
+import { ActionPlayCard } from "../../action/ActionSK";
 
 type PlayableProp = {
     card: ReactElement,
@@ -7,14 +8,33 @@ type PlayableProp = {
 }
 
 export function Playable({ card, cardId }: PlayableProp) {
+    const [isScaryMary] = useState(isScaryMaryCard())
     const { socket } = useSocketContext()
 
+    function isScaryMaryCard(){
+        return cardId === 'scaryMary'
+    }
 
-    function handleClickPlayCard() {
-        socket.emit('req-update-gameState', { type: 'playCard', cardId: cardId })
+    function handleClickPlayCard(scaryMaryChoice?: 'pirate' | 'escape') {
+        const action: ActionPlayCard = {
+            type: "playCard",
+             cardId: cardId,
+             scaryMaryChoice: scaryMaryChoice
+        }
+        socket.emit('req-update-gameState', action)
     }
 
     return (
-        <div onClick={handleClickPlayCard}>{card}</div>
+        isScaryMary ? (
+            <>
+                <div>{card}</div>
+                <ul>
+                    <li onClick={() => handleClickPlayCard('pirate')}>{'('}Pirate Scary Mary{')'}</li>
+                    <li onClick={() => handleClickPlayCard('escape')}>{'('}Escape Scary Mary{')'}</li>
+                </ul>
+            </>)
+            : (
+                <div onClick={() => handleClickPlayCard()}>{card}</div>
+            )
     )
 }

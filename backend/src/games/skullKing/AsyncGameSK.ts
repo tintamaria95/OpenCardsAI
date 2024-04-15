@@ -3,97 +3,61 @@ import { DeckSK } from './DeckSK'
 import { PlayerSK } from './PlayerSK'
 import { PileSK } from './PileSK'
 import { gameLogger } from '../../logger'
-import { AsyncGame } from '../commonClasses/AsyncGame'
+import { AsyncGame, AsyncGameInterface } from '../commonClasses/AsyncGame'
 import { CardSK, SkColors } from './CardSK'
+import { ActionSetContract, ActionPlayCard } from './ActionSK'
+import { Action } from '../commonClasses/Action'
 
-export type ActionSetContract = {
-    type: "setContract",
-    contractValue: number
-}
-
-export type ActionPlayCard = {
-    type: "playCard",
-    cardId: string
-}
-
-export type ActionChooseScaryMaryType = {
-    type: 'chooseScaryMaryType',
-    choice: 'pirate' | 'escape'
-}
-export type ActionsSK = ActionSetContract | ActionPlayCard | ActionChooseScaryMaryType
-
-export type State = {
-    nbPlayers: number,
-    nbRounds: number,
-    players: PlayerSK[],
-
-    roundFirstPlayerIndex: number,
-    trickFirstPlayerIndex: number,
-
-    isGameEnded: boolean,
-    pile: PileSK,
-    roundIndex: number,
-    trickIndex: number
-}
 
 type PlayerFrontState = {
-    roundIndex: number,
+    roundIndex: number
     roundFirstPlayerIndex: number
-    possibleActions: ActionsSK['type'][],
-    possiblePlayers: string[],
-    pileCards: string[],
-    contracts: number[],
-    nbTricks: number[],
-    scores: number[],
+    possibleActions: Action['type'][]
+    possiblePlayers: string[]
+    pileCards: string[]
+    contracts: number[]
+    nbTricks: number[]
+    scores: number[]
     // Private information
     playerHand: string[]
 }
 
 
-export class AsyncGameSK extends AsyncGame {
-    private deck: DeckSK
-    private id2Index: Map<string, number>
-    private possibleActions: Set<ActionsSK['type']>
-    private possiblePlayerIds: Set<string>
-    private state: State
+export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
+
+    protected players: PlayerSK[]
+
+    private nbRounds: number
+    private roundFirstPlayerIndex: number
+    private trickFirstPlayerIndex: number
+    private roundIndex: number
+    private trickIndex: number
+    private pile: PileSK
 
     constructor(players: PlayerSK[], deck: DeckSK) {
-        super()
-        this.deck = deck
-        this.deck.shuffle()
-
-
-        this.id2Index =new Map<string, number>(),
-        this.possibleActions = new Set<ActionsSK['type']>(['setContract']),
-        this.possiblePlayerIds = new Set(Array.from({ length: players.length }, (_, index) => players[index].getId()))
-
-        this.state = {
-            players: players,
-            nbPlayers: players.length,
-            isGameEnded: false,
-            nbRounds: Math.min(
-                10,
-                Math.floor(deck.getDeckSize() / players.length)
-            ),
-            roundFirstPlayerIndex: 0,
-            trickFirstPlayerIndex: 0,
-            roundIndex: 1,
-            trickIndex: 0,
-            pile: new PileSK()
-        }
-        this.state.roundFirstPlayerIndex = randomInt(this.state.nbPlayers)
-        this.state.trickFirstPlayerIndex = this.state.roundFirstPlayerIndex
+        super(players, deck)
+        this.players = players
+        
+        this.nbRounds = Math.min(
+            10,
+            Math.floor(deck.getDeckSize() / players.length)
+        )
+        this.roundFirstPlayerIndex = randomInt(this.nbPlayers)
+        this.trickFirstPlayerIndex = this.roundFirstPlayerIndex
+        this.roundIndex = 1
+        this.trickIndex = 0
+        this.pile = new PileSK()
 
         players.forEach((player, index) => {
             this.id2Index.set(player.getId(), index)
         })
 
         gameLogger.debug('- GAME STARTS -')
-        gameLogger.debug(`Round first player: ${players[this.state.roundFirstPlayerIndex].getId()}`)
+        gameLogger.debug(`Round first player: ${players[this.roundFirstPlayerIndex].getId()}`)
         this.distributeCardsToPlayers()
     }
 
-    public getPlayerState(playerId: string): PlayerFrontState{
+    public getPlayerState(playerId: string): PlayerFrontState {
         return {
             // Public informations
             roundIndex: this.getRoundIndex(),
@@ -110,74 +74,66 @@ export class AsyncGameSK extends AsyncGame {
         }
     }
 
-    public getPossibleActions(){
-        return [...this.possibleActions.values()]
-    }
-
-    public getPossiblePlayers(){
-        return [...this.possiblePlayerIds.values()]
-    }
-
     public getRoundIndex() {
-        return this.state.roundIndex
+        return this.roundIndex
     }
 
-    public getRoundFirstPlayerIndex(){
-        return this.state.roundFirstPlayerIndex
+    public getRoundFirstPlayerIndex() {
+        return this.roundFirstPlayerIndex
     }
 
-    getPileCards(){
-        return this.state.pile.getCardsIds()
+    getPileCards() {
+        return this.pile.getCardsIds()
     }
 
-    public getContracts(){
+    public getContracts() {
         const contracts: number[] = []
-        this.state.players.forEach(player => contracts.push(player.getContract()))
+        this.players.forEach(player => contracts.push(player.getContract()))
         return contracts
     }
 
-    public getNbTricks(){
+    public getNbTricks() {
         const tricks: number[] = []
-        this.state.players.forEach(player => tricks.push(player.getWonTricks()))
+        this.players.forEach(player => tricks.push(player.getWonTricks()))
         return tricks
     }
 
-    public getScores(){
+    public getScores() {
         const scores: number[] = []
-        this.state.players.forEach(player => scores.push(player.getGameScore()))
+        this.players.forEach(player => scores.push(player.getGameScore()))
         return scores
     }
 
-    private getPlayer(index: number){
-        return this.state.players[index]
+    private getPlayer(index: number) {
+        return this.players[index]
     }
 
-    public getPlayerContract(id: string){
+    public getPlayerContract(id: string) {
         const index = this.id2Index.get(id)
-        if(index !== undefined){
+        if (index !== undefined) {
             return this.getPlayer(index).getContract()
         }
     }
 
-    public getPlayerNbTricks(id: string){
+    public getPlayerNbTricks(id: string) {
         const index = this.id2Index.get(id)
-        if(index !== undefined){
+        if (index !== undefined) {
             return this.getPlayer(index).getWonTricks()
         }
     }
 
-    public getPlayerScore(id: string){
+    public getPlayerScore(id: string) {
         const index = this.id2Index.get(id)
-        if(index !== undefined){
+        if (index !== undefined) {
             return this.getPlayer(index).getGameScore()
         }
     }
 
-    public getPlayerCardIds(id: string){
+    public getPlayerCardIds(id: string) {
         const index = this.id2Index.get(id)
-        if(index !== undefined){
+        if (index !== undefined) {
             return this.getPlayer(index).getCardIds()
-        } else{
+        } else {
             gameLogger.error(`Id '${id}' undefined in id2Index object. Cannot return player hand (returned empty array).`)
             return []
         }
@@ -204,23 +160,13 @@ export class AsyncGameSK extends AsyncGame {
     }
 
     /**
-     * Security function which returns true if a player tries to play the wrong action or at the wrong moment.
-     */
-    public isActionAllowed(action: ActionsSK, playerId: string) {
-        if (this.possibleActions.has(action['type']) && this.possiblePlayerIds.has(playerId)) {
-            return true
-        }
-        return false
-    }
-
-    /**
      * Method which can update the current state given a player id and action.
      * @param actionType Must be set to 'setContract' or 'playCard' (TODO add bloodyMary choice later)
      * @param action 
      * @param playerId 
      */
-    public updateState(action: ActionsSK, playerId: string) {
-        if (this.state.isGameEnded) {
+    public updateState(action: Action, playerId: string) {
+        if (this.isGameEnded) {
             gameLogger.warn('Game ended - No action allowed anymore')
             return
         }
@@ -233,63 +179,68 @@ export class AsyncGameSK extends AsyncGame {
             gameLogger.error(`Logic error: playerId '${playerId}' undefined in map object 'id2Index'`)
             return
         }
+        const player = this.players[playerIndex]
         if (action['type'] === 'setContract') {
-            if (this.actionSetContract(action, playerIndex)) {
+            if (this.actionSetContract(action, player)) {
                 gameLogger.debug(`Player '${playerId}' sets contracts = ${action['contractValue']}`)
                 if (this.isAllContractsSet()) {
                     this.possibleActions.clear()
                     this.possibleActions.add('playCard')
-                    this.possiblePlayerIds.add(this.state.players[this.state.roundFirstPlayerIndex].getId())
+                    this.possiblePlayerIds.add(this.players[this.roundFirstPlayerIndex].getId())
                     gameLogger.debug('All players have set their contracts. Next phase: PlayCard')
                 }
             }
         } else if (action['type'] === 'playCard') {
-            if (this.actionPlayCard(action, playerIndex)) {
+            if (this.actionPlayCard(action, player)) {
                 if (this.isAllCardsPlayed()) {
-                    gameLogger.debug(`Trick ${this.state.trickIndex + 1} ended`)
+                    gameLogger.debug(`Trick ${this.trickIndex + 1} ended`)
                     this.endTrick()
                 } else {
                     this.setForNextPlayer()
                 }
             }
-        
-        } else if (action['type'] === 'chooseScaryMaryType') {
-            // TODO
-        }
+        } 
     }
 
-    private actionSetContract(action: ActionSetContract, playerIndex: number) {
-        if (action['contractValue'] >= 0 && action['contractValue'] <= this.state.roundIndex && Number.isInteger(action['contractValue'])) {
-            this.state.players[playerIndex].setContract(action['contractValue'])
-            this.possiblePlayerIds.delete(this.state.players[playerIndex].getId())
+    private actionSetContract(action: ActionSetContract, player: PlayerSK) {
+        if (action['contractValue'] >= 0 && action['contractValue'] <= this.roundIndex && Number.isInteger(action['contractValue'])) {
+            player.setContract(action['contractValue'])
+            this.possiblePlayerIds.delete(player.getId())
             return true
         } else {
-            gameLogger.warn(`Cannot set a contract of value '${action['contractValue']}' at round ${this.state.roundIndex}`)
+            gameLogger.warn(`Cannot set a contract of value '${action['contractValue']}' at round ${this.roundIndex}`)
             return false
         }
     }
 
-    private actionPlayCard(action: ActionPlayCard, playerIndex: number) {
-        const player = this.getPlayer(playerIndex)
+    private actionPlayCard(action: ActionPlayCard, player: PlayerSK) {
         const cardIndexInHand = player.getCardIndex(action['cardId'])
-        cardIndexInHand !== -1
         if (cardIndexInHand !== -1) {
-            if (this.isPlayerAllowedToPlayCardInPile(action['cardId'], player, this.state.pile.getTrickColor())) {
+            if (this.isPlayerAllowedToPlayCardInPile(action['cardId'], player, this.pile.getTrickColor())) {
+                if (action['cardId'] === 'scaryMary'){
+                    if (action['scaryMaryChoice'] === undefined){
+                        gameLogger.error(`Scary Mary card must have a value defined as 'pirate' or 'escape' when played.`)
+                        return false
+                    } 
+                }
                 const chosenCard = player.playCard(cardIndexInHand)
+                if (action['cardId'] === 'scaryMary' && action['scaryMaryChoice'] !== undefined) {
+                    chosenCard.value = action['scaryMaryChoice']
+                    if (action['scaryMaryChoice'] === 'escape') {
+                        chosenCard.category = 'escape'
+                    } else {
+                        chosenCard.category = 'character'
+                    }
+                }
                 gameLogger.debug(`'${player.getId()}' played ${chosenCard.id}`)
-                this.state.pile.addCard(chosenCard)
+                this.pile.addCard(chosenCard)
                 return true
             }
         } else {
-            gameLogger.warn(`'${this.state.players[playerIndex].getId()}'cannot play card of id '${action['cardId']}'`)
+            gameLogger.warn(`'${player.getId()}'cannot play card of id '${action['cardId']}'`)
         }
         return false
     }
-
-    // private actionChooseScaryMaryType(action: ActionChooseScaryMaryType, playerIndex: number) {
-    //     const player = this.getPlayer(playerIndex)
-    //     //TODO
-    // }
 
     /**
      * This methods updates the class variables to allow the next player to do an action.
@@ -301,33 +252,33 @@ export class AsyncGameSK extends AsyncGame {
             gameLogger.error(`Unknown player Id '${currentPlayerId}'`)
             return
         }
-        const nextPlayerIndex = (currentPlayerIndex + 1) % this.state.nbPlayers
-        const nextPlayerId = this.state.players[nextPlayerIndex].getId()
+        const nextPlayerIndex = (currentPlayerIndex + 1) % this.nbPlayers
+        const nextPlayerId = this.players[nextPlayerIndex].getId()
         this.possiblePlayerIds.clear()
         this.possiblePlayerIds.add(nextPlayerId)
     }
 
     private endTrick() {
         // this.pile.show()
-        gameLogger.debug('winning card: ' + this.state.pile.getCurrentWinningCardIndex().toString())
-        this.state.trickFirstPlayerIndex = (this.state.trickFirstPlayerIndex + this.state.pile.getCurrentWinningCardIndex()) % this.state.nbPlayers
-        gameLogger.debug('Trick winner: ' + this.state.players[this.state.trickFirstPlayerIndex].getId())
-        this.state.players[this.state.trickFirstPlayerIndex].incrementWonTricks()
-        this.state.players[this.state.trickFirstPlayerIndex].addToBonusPoints(this.state.pile.getBonusPoints())
-        this.state.trickIndex += 1
-        this.state.pile = new PileSK()
+        gameLogger.debug('winning card: ' + this.pile.getCurrentWinningCardIndex().toString())
+        this.trickFirstPlayerIndex = (this.trickFirstPlayerIndex + this.pile.getCurrentWinningCardIndex()) % this.nbPlayers
+        gameLogger.debug('Trick winner: ' + this.players[this.trickFirstPlayerIndex].getId())
+        this.players[this.trickFirstPlayerIndex].incrementWonTricks()
+        this.players[this.trickFirstPlayerIndex].addToBonusPoints(this.pile.getBonusPoints())
+        this.trickIndex += 1
+        this.pile = new PileSK()
         this.possiblePlayerIds.clear()
-        const trickFirstPlayerId = this.state.players[this.state.trickFirstPlayerIndex].getId()
+        const trickFirstPlayerId = this.players[this.trickFirstPlayerIndex].getId()
         this.possiblePlayerIds.add(trickFirstPlayerId)
-        if (this.state.trickIndex === this.state.roundIndex) {
-            gameLogger.debug(`Round ${this.state.roundIndex} ended`)
+        if (this.trickIndex === this.roundIndex) {
+            gameLogger.debug(`Round ${this.roundIndex} ended`)
             this.endRound()
         }
 
     }
 
     private isAllCardsPlayed() {
-        return this.state.pile.getNbCards() === this.state.nbPlayers
+        return this.pile.getNbCards() === this.nbPlayers
     }
 
     private isAllContractsSet() {
@@ -339,28 +290,28 @@ export class AsyncGameSK extends AsyncGame {
      */
     private endRound() {
 
-        this.state.players.forEach(player => {
+        this.players.forEach(player => {
             gameLogger.debug(`Player ${player.getId()}: ${player.getWonTricks()} / ${player.getContract()}`)
-            player.addToGameScore(this.score(this.state.roundIndex, player.getContract(), player.getWonTricks(), player.getBonusPoints()))
+            player.addToGameScore(this.score(this.roundIndex, player.getContract(), player.getWonTricks(), player.getBonusPoints()))
             gameLogger.debug(`Score : ${player.getGameScore()}`)
         })
-        if (this.state.roundIndex === this.state.nbRounds) {
-            this.state.isGameEnded = true
+        if (this.roundIndex === this.nbRounds) {
+            this.isGameEnded = true
             gameLogger.debug('- GAME ENDED -')
             return
         }
-        this.state.roundIndex += 1
-        this.state.trickIndex = 0
+        this.roundIndex += 1
+        this.trickIndex = 0
         gameLogger.debug(`---------- `)
-        gameLogger.debug(`Start round ${this.state.roundIndex}`)
-        this.state.roundFirstPlayerIndex = (this.state.roundFirstPlayerIndex + 1) % this.state.nbPlayers
-        gameLogger.debug(`Round first player: ${this.state.players[this.state.roundFirstPlayerIndex].getId()}`)
-        this.state.trickFirstPlayerIndex = this.state.roundFirstPlayerIndex
+        gameLogger.debug(`Start round ${this.roundIndex}`)
+        this.roundFirstPlayerIndex = (this.roundFirstPlayerIndex + 1) % this.nbPlayers
+        gameLogger.debug(`Round first player: ${this.players[this.roundFirstPlayerIndex].getId()}`)
+        this.trickFirstPlayerIndex = this.roundFirstPlayerIndex
         this.deck.shuffle()
         this.possibleActions.clear()
         this.possibleActions.add('setContract')
         this.possiblePlayerIds.clear()
-        this.state.players.forEach(player => {
+        this.players.forEach(player => {
             this.possiblePlayerIds.add(player.getId())
             player.resetRoundStats()
         })
@@ -368,10 +319,10 @@ export class AsyncGameSK extends AsyncGame {
     }
 
     private distributeCardsToPlayers() {
-        const roundCards = this.deck.getCards(this.state.nbPlayers * this.state.roundIndex)
-        for (let playerIndex = 0; playerIndex < this.state.nbPlayers; playerIndex++) {
-            this.state.players[playerIndex].setCards(
-                roundCards.slice(playerIndex * this.state.roundIndex, playerIndex * this.state.roundIndex + this.state.roundIndex)
+        const roundCards = this.deck.getCards(this.nbPlayers * this.roundIndex)
+        for (let playerIndex = 0; playerIndex < this.nbPlayers; playerIndex++) {
+            this.players[playerIndex].setCards(
+                roundCards.slice(playerIndex * this.roundIndex, playerIndex * this.roundIndex + this.roundIndex)
             )
         }
     }
@@ -379,12 +330,12 @@ export class AsyncGameSK extends AsyncGame {
     /**
      * Return the cards that a player can play from his hand to the Pile (among all cards that he has in his hand). In Skull King, a player must play the color announced first if he has it in hand. The rules say that the player can avoid following this rule if the card that he wants to play is a "special card" (pirate or escape for example). 
      */
-    private getPlayerPlayableCards(player: PlayerSK, trickColor?: SkColors){
+    private getPlayerPlayableCards(player: PlayerSK, trickColor?: SkColors) {
         const colorsInHand = player.getCards().map(card => card.color)
-        if(colorsInHand.includes(trickColor) && trickColor !== undefined){
+        if (colorsInHand.includes(trickColor) && trickColor !== undefined) {
             const playableCards: CardSK[] = []
             player.getCards().forEach(card => {
-                if (card.color === trickColor || card.category === 'character' || card.category === 'escape'){
+                if (card.color === trickColor || card.category === 'character' || card.category === 'escape') {
                     playableCards.push(card)
                 }
             })
@@ -393,6 +344,29 @@ export class AsyncGameSK extends AsyncGame {
         return player.getCards()
     }
 
+    public getRandomPossibleAction(): {playerId: string, action:Action} | undefined{
+        const possiblePlayerIds = [...this.possiblePlayerIds.values()]
+        const playerChoiceIndex = Math.floor(Math.random() * possiblePlayerIds.length)
+        const playerId = possiblePlayerIds[playerChoiceIndex]
+        if (this.possibleActions.has('setContract')){
+            return {playerId: playerId, action: {type: 'setContract', contractValue: Math.floor(Math.random() * (this.roundIndex + 1))}}
+        } else {
+            const playerIndex = this.id2Index.get(playerId)
+            if (playerIndex === undefined){
+                gameLogger.error(`Error: id2Index return an undefined object for id '${playerId}'`)
+                return
+            }
+            const player = this.players[playerIndex]
+            const possibleCardsToPlay = this.getPlayerPlayableCards(player, this.pile.getTrickColor())
+            const randomCardId = possibleCardsToPlay[Math.floor(Math.random() * possibleCardsToPlay.length)].getId()
+            let scaryMaryChoice = undefined
+            if (randomCardId === 'scaryMary'){
+                const smChoice: ('escape' | 'pirate') [] = ['escape', 'pirate']
+                scaryMaryChoice = smChoice[Math.floor(Math.random() * 2)]
+            }
+            return {playerId: playerId, action: {type: 'playCard', cardId: randomCardId, scaryMaryChoice: scaryMaryChoice}}
+        }
+    }
 
     private isPlayerAllowedToPlayCardInPile(cardId: string, player: PlayerSK, trickColor?: SkColors) {
         const playableCardIds: string[] = this.getPlayerPlayableCards(player, trickColor).map(card => card.id)

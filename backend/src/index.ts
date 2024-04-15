@@ -12,13 +12,17 @@ import { InMemoryLobbiesStore } from './lobby/lobbyStore'
 import { checkSessionId } from './websocket/middleware'
 import {
   disconnect,
+  getSessionGame,
+  getSessionLobby,
   joinMenu,
   reqCreateLobby,
   reqJoinLobby, 
   reqLobbyList,
+  reqUpdateGameState,
   updateUsername
 } from './websocket/events'
-import { ActionsSK, AsyncGameSK } from './games/skullKing/AsyncGameSK'
+import { AsyncGameSK } from './games/skullKing/AsyncGameSK'
+import { Action } from './games/commonClasses/Action'
 import { PlayerSK } from './games/skullKing/PlayerSK'
 import { DeckSK } from './games/skullKing/DeckSK'
 
@@ -126,45 +130,33 @@ io.on('connection', async (socket) => {
   )
 
   socket.on('req-get-gameState', () => {
-    const lobbyId = session.lobbyId
-    if (lobbyId == undefined) {
-      lobbyLogger.undefinedLobby(lobbyId)
-      return
-    }
-    const lobby = lobbyStore.getLobby(lobbyId)
-    if (lobby === undefined) {
-      lobbyLogger.undefinedLobby(lobbyId)
-      return
-    }
-    const game = lobby.game
-    if (game === undefined) {
-      lobbyLogger.undefinedGame(lobbyId)
-      return
-    }
-    lobby.users.forEach(user => io.to(user.sessionId).emit('gameState', game.getPlayerState(user.sessionId)))
-    socket.on('req-update-gameState', (action: ActionsSK) => {
-      game.updateState(action, sessionId)
-      lobby.users.forEach(user => io.to(user.sessionId).emit('gameState', game.getPlayerState(user.sessionId)))
-    })
+    const lobby = getSessionLobby(lobbyStore, session)
+    if (lobby === undefined) { return }
+    const game = getSessionGame(lobby)
+    if (game === undefined) { return }
+    io.to(session.sessionId).emit('gameState', game.getPlayerState(session.sessionId))
   })
 
+  socket.on('req-update-gameState', (action: Action) => {
+    const lobby = getSessionLobby(lobbyStore, session)
+    if (lobby === undefined) { return }
+    const game = getSessionGame(lobby)
+    if (game === undefined) { return }
+    reqUpdateGameState(io, lobby, game, sessionId, action)
+  })
 
   socket.on('req-start-game', () => {
-    const lobbyId = session.lobbyId
-    if (lobbyId !== undefined) {
-      const lobby = lobbyStore.getLobby(lobbyId)
-      if (lobby !== undefined) {
-        if (lobby.game !== undefined){
-          lobbyLogger.logger.debug(`Error: Game already started: Received request to start game in lobby with id "${lobbyId} | sessionId ${sessionId}"`)
-          return
-        }
-        const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.username))
-        const deck = new DeckSK()
-        const game = new AsyncGameSK(players, deck)
-        lobby.game = game
-        io.to(lobbyId).emit('res-start-game')
-      }
+    const lobby = getSessionLobby(lobbyStore, session)
+    if (lobby === undefined) { return }
+    if (lobby.game !== undefined) {
+      lobbyLogger.logger.debug(`Error: Game already started: Received request to start game in lobby with id "${lobby.id} | sessionId ${sessionId}"`)
+      return
     }
+    const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.username))
+    const deck = new DeckSK()
+    const game = new AsyncGameSK(players, deck)
+    lobby.game = game
+    io.to(lobby.id).emit('res-start-game')
   })
 
   socket.on('disconnect', () =>
