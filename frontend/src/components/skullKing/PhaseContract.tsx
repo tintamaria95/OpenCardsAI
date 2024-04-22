@@ -19,6 +19,7 @@ export function PhaseContract({maxContractValue, playerHand}: PhaseContractProp)
     
     return (
         <>
+            <h2>Contract phase</h2>
             <section>
                 <h3>Cards in Hand</h3>
                 <ul>

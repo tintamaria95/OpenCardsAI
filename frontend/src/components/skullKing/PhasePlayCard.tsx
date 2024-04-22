@@ -12,6 +12,7 @@ export function PhasePlayCard({ nbTricks, contracts, pileCards, playerHand }: Ph
     const { currentLobby } = useCurrentLobbyContext()
     return (
         <>
+            <h2>Play card phase</h2>
             <section>
                 <h3>Contracts</h3>
                 <ul>
