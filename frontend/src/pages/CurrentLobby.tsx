@@ -9,6 +9,7 @@ export default function CurrentLobby() {
   const { socket } = useSocketContext()
   const { currentLobby } = useCurrentLobbyContext()
   const [isWaitingForPlayersToJoin, setIsWaitingForPlayersToJoin] = useState(!currentLobby?.isGameStarted)
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     socket.on('res-start-game', stopWaitingAndStartGame)
@@ -17,8 +18,14 @@ export default function CurrentLobby() {
     }
   })
 
-  function stopWaitingAndStartGame() {
-    setIsWaitingForPlayersToJoin(false)
+  function stopWaitingAndStartGame(status: string, errorMessage?: string) {
+    if (status === 'success'){
+    setIsWaitingForPlayersToJoin(false)}
+    else if (status === "fail") {
+      if (errorMessage !== undefined){
+        setErrorMessage(errorMessage)
+      }
+    }
   }
 
   function handleClickStartGame() {
@@ -36,6 +43,7 @@ export default function CurrentLobby() {
             <>
               <WaitingRoom />
               <button onClick={handleClickStartGame}>Start game</button>
+              <div>{errorMessage}</div>
             </>
           ) : (
             <SkullKing />

@@ -21,6 +21,9 @@ export class AsyncGame {
     protected nbPlayers: number
     protected isGameEnded: boolean
 
+    protected static minPlayers = 2
+    protected static maxPlayers = 8
+
     constructor(players: Player[], deck: Deck){
         this.deck = deck
         this.deck.shuffle()

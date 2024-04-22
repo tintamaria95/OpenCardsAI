@@ -9,22 +9,34 @@ export default function LobbyList() {
   const { socket } = useSocketContext()
 
   useEffect(() => {
-    function updateCreateLobby(lobby: LobbyFrontType) {
-      setLobbyList((prev) => [...prev, lobby])
-    }
-
-    function updateSetLobbyList(lobbyList: LobbyFrontType[]) {
+    function eventSetLobbyList(lobbyList: LobbyFrontType[]) {
       setLobbyList(lobbyList)
     }
 
-    socket.on('update-lobbylist-setall', updateSetLobbyList)
-    socket.on('update-lobbylist-addlobby', updateCreateLobby)
+    function eventCreateLobby(lobby: LobbyFrontType) {
+      setLobbyList(prev => [...prev, lobby])
+    }
+
+    function eventUpdateLobby(updatedLobby: LobbyFrontType) {
+      setLobbyList(prev =>
+        prev.map(lobby => {
+          if (lobby.id === updatedLobby.id) {
+            return updatedLobby
+          } return lobby
+        }))
+    }
+
+    
+
+    socket.on('update-lobbylist-setall', eventSetLobbyList)
+    socket.on('update-lobbylist-addlobby', eventCreateLobby)
+    socket.on('update-lobbylist-updatelobby', eventUpdateLobby)
 
     socket.emit('req-lobbylist')
 
     return () => {
-      socket.off('update-lobbylist-setall', updateSetLobbyList)
-      socket.off('update-lobbylist-addlobby', updateCreateLobby)
+      socket.off('update-lobbylist-setall', eventSetLobbyList)
+      socket.off('update-lobbylist-addlobby', eventCreateLobby)
     }
   }, [socket])
 
@@ -44,6 +56,7 @@ export default function LobbyList() {
                 name={lobby.name}
                 users={lobby.users}
                 isPublic={lobby.isPublic}
+                isGameStarted={lobby.isGameStarted}
               />
             </li>
           ))}

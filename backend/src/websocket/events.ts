@@ -4,9 +4,12 @@ import { InMemorySessionsStore } from '../lobby/sessionStore'
 import { Lobby } from '../lobby/Lobby'
 import { User } from '../lobby/User'
 import { InMemoryLobbiesStore } from '../lobby/lobbyStore'
-import { handleUserLeftLobby } from '../lobby/handleLobbyChanges'
+import { handleAddUserToLobby, handleUserLeftLobby } from '../lobby/handleLobbyChanges'
 import { AsyncGameSK } from '../games/skullKing/AsyncGameSK'
 import { Action } from '../games/commonClasses/Action'
+import { getFrontErrorMessage } from '../utils'
+import { emitResJoinLobby } from './emit'
+import { ROOMPUBLICLOBBY } from './emit'
 
 export function updateUsername(
   username: string,
@@ -48,7 +51,6 @@ export async function reqCreateLobby(
   isPublic: boolean,
   io: Server,
   socket: Socket,
-  ROOMPUBLICLOBBY: string,
   lobbyStore: InMemoryLobbiesStore,
   session: User
 ) {
@@ -63,7 +65,7 @@ export async function reqCreateLobby(
   await socket.leave(ROOMPUBLICLOBBY)
   await socket.join(lobbyId)
 
-  io.to(lobbyId).emit('res-join-lobby', 'success', lobby.getFront())
+  emitResJoinLobby(io, session.sessionId, {status: 'success', lobby: lobby.getFront()})
   if (isPublic) {
     io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-addlobby', lobby.getFront())
   }
@@ -73,30 +75,27 @@ export async function reqJoinLobby(
   lobbyId: Lobby['id'],
   io: Server,
   socket: Socket,
-  ROOMPUBLICLOBBY: string,
   lobbyStore: InMemoryLobbiesStore,
   session: User
 ) {
   const lobby = lobbyStore.getLobby(lobbyId)
   if (lobby !== undefined) {
-    if (lobby.isUserInLobby(session.sessionId)) {
-      lobbyLogger.userAlreadyInLobby(session.sessionId, lobbyId)
-      io.to(lobbyId).emit(
-        'res-join-lobby',
-        'userAlreadyInLobby',
-        lobby.getFront()
-      )
+    const isGameStarted = lobby.game !== undefined
+    if (isGameStarted) {
+      if (lobby.isBotInLobby(session.sessionId)){
+        handleAddUserToLobby(lobby, session, io, socket)
+      } else {
+        emitResJoinLobby(io, session.sessionId, {status: 'fail', errorMessage: getFrontErrorMessage({type: 'gameAlreadyStartedError'})})
+      }
     } else {
-      lobby.addUserToLobby(session)
-      await socket.leave(ROOMPUBLICLOBBY)
-      await socket.join(lobbyId)
-      session.lobbyId = lobbyId
-      io.to(lobbyId).emit(
-        'res-join-lobby',
-        'success',
-        lobby.getFront()
-      )
+      if (lobby.isUserInLobby(session.sessionId)) {
+        lobbyLogger.userAlreadyInLobby(session.sessionId, lobbyId)
+        emitResJoinLobby(io, session.sessionId, {status: 'fail', errorMessage: getFrontErrorMessage({type: 'userAlreadyInLobby'})})
+      } else {
+        handleAddUserToLobby(lobby, session, io, socket)
+      }
     }
+
   } else {
     lobbyLogger.undefinedLobby(lobbyId)
     io.to(socket.id).emit('res-join-lobby', 'undefinedLobby', undefined)
@@ -145,10 +144,8 @@ export function reqUpdateGameState(
   game.updateState(action, sessionId)
   const isNextStateContractPhase = game.getPossibleActions().includes('setContract') && game.getPossiblePlayers().length !== game.getNbPlayers()
   if (isNextStateContractPhase) {
-    console.log('includes setcontract / only to player')
     game.emitUpdateToPlayer(sessionId)
   } else {
     game.emitUpdateToPlayers()
-    console.log('not includes setcontract / to all players')
   }
 }
