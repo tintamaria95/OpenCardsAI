@@ -28,13 +28,6 @@ export default function LobbyToCreate({ isPublic }: LobbyToCreatePropType) {
   }
 
   return (
-    // <>
-    //   <input
-    //     placeholder={'reallyOriginalLobbyName'}
-    //     onChange={(e) => setLobbyName(e.target.value)}
-    //   />
-    //   <button onClick={handleCreateNewLobby}>Create new lobby</button>
-    // </>
     <form onSubmit={handleSubmitCreateNewLobby}>
       <input
         type="text"

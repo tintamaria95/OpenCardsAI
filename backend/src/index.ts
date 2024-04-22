@@ -5,7 +5,7 @@ import { Server } from 'socket.io'
 import * as path from 'path'
 import { lobbyLogger } from './logger'
 import { Lobby } from './lobby/Lobby'
-import { ROOMPUBLICLOBBY } from './lobby/handleLobbyChanges'
+import { ROOMPUBLICLOBBY } from './websocket/emit'
 import * as cors from 'cors'
 import { InMemorySessionsStore } from './lobby/sessionStore'
 import { InMemoryLobbiesStore } from './lobby/lobbyStore'
@@ -25,6 +25,7 @@ import { AsyncGameSK } from './games/skullKing/AsyncGameSK'
 import { Action } from './games/commonClasses/Action'
 import { PlayerSK } from './games/skullKing/PlayerSK'
 import { DeckSK } from './games/skullKing/DeckSK'
+import { getFrontErrorMessage } from './utils'
 
 const PORT = 3000
 
@@ -112,7 +113,6 @@ io.on('connection', async (socket) => {
       isPublic,
       io,
       socket,
-      ROOMPUBLICLOBBY,
       lobbyStore,
       session
     )
@@ -123,7 +123,6 @@ io.on('connection', async (socket) => {
       lobbyId,
       io,
       socket,
-      ROOMPUBLICLOBBY,
       lobbyStore,
       session
     )
@@ -147,16 +146,33 @@ io.on('connection', async (socket) => {
 
   socket.on('req-start-game', () => {
     const lobby = getSessionLobby(lobbyStore, session)
-    if (lobby === undefined) { return }
+    if (lobby === undefined) {
+      return
+    }
+    console.log('LOG')
+    console.log(lobby.game === undefined)
     if (lobby.game !== undefined) {
-      lobbyLogger.logger.debug(`Error: Game already started: Received request to start game in lobby with id "${lobby.id} | sessionId ${sessionId}"`)
+      lobbyLogger.logger.warn(`Game already started: Received request to start game in lobby with id "${lobby.id} | sessionId ${sessionId}"`)
       return
     }
     const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.username))
-    const deck = new DeckSK()
-    const game = new AsyncGameSK(players, deck, 10, io)
-    lobby.game = game
-    io.to(lobby.id).emit('res-start-game')
+    if (players.length >= AsyncGameSK.minPlayers && players.length <= AsyncGameSK.maxPlayers) {
+      const deck = new DeckSK()
+      const game = new AsyncGameSK(players, deck, 10, io)
+      lobby.game = game
+      io.to(lobby.id).emit('res-start-game', 'success')
+      if (lobby.isPublic) {
+        io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-updatelobby', lobby.getFront())
+      }
+    } else {
+      const frontErrorMessage = getFrontErrorMessage({
+        type: 'incorrectNumberOfPlayers',
+        minPlayers: AsyncGameSK.minPlayers,
+        maxPlayers: AsyncGameSK.maxPlayers,
+        currentNbPlayers: players.length
+      })
+      io.to(lobby.id).emit('res-start-game', 'fail', frontErrorMessage)
+    }
   })
 
   socket.on('disconnect', async () =>

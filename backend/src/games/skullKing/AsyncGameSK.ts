@@ -26,6 +26,9 @@ type PlayerFrontState = {
 
 export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
 
+    public static readonly minPlayers = 2
+    public static readonly maxPlayers = 8
+
     protected players: PlayerSK[]
 
     private nbRounds: number

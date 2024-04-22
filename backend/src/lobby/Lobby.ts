@@ -63,6 +63,16 @@ export class Lobby {
         return false
     }
 
+    isBotInLobby(sessionId: User['sessionId']) {
+        const user = this.users.get(sessionId)
+        if (user !== undefined) {
+            if (user.isBot) {
+                return true
+            }
+        }
+        return false
+    }
+
     addUserToLobby(user: User) {
         this.users.set(user.sessionId, user)
         user.lobbyId = this.id

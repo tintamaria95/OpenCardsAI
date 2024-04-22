@@ -2,7 +2,7 @@ import { ReactElement, useState, useEffect } from 'react'
 import { CurrentLobbyContext } from './CurrentLobbyContext'
 import socket from '../socket'
 import { useNavigate } from 'react-router-dom'
-import { LobbyFrontType } from '../types'
+import { LobbyFrontType, ResJoinLobbyFailArgs, ResJoinLobbySuccessArgs } from '../types'
 
 export function CurrentLobbyContextProvider({
   children
@@ -18,9 +18,9 @@ export function CurrentLobbyContextProvider({
     function updateLobby(lobby: LobbyFrontType) {
       setCurrentLobby(lobby)
     }
-    function resNavigateToLobby(status: string, lobby: LobbyFrontType) {
-      if (status === 'success') {
-        setCurrentLobby(lobby)
+    function resNavigateToLobby(args: ResJoinLobbySuccessArgs | ResJoinLobbyFailArgs) {
+      if (args['status'] === 'success') {
+        setCurrentLobby(args['lobby'])
         navigate('/play')
       }
     }
