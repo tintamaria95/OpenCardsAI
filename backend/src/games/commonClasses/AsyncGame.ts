@@ -50,6 +50,10 @@ export class AsyncGame {
         return false
     }
 
+    public getNbPlayers(){
+        return this.nbPlayers
+    }
+
     public getPossibleActions() {
         return [...this.possibleActions.values()]
     }

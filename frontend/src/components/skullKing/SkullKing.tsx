@@ -6,10 +6,14 @@ import {
 import { PhaseContract } from "./PhaseContract"
 import { PhasePlayCard } from "./PhasePlayCard"
 import { useCurrentLobbyContext } from "../../contexts/CurrentLobbyContext"
+import { useCountdown } from "../Countdown"
+import { useUserContext } from "../../contexts/UserContext"
 
 export function SkullKing() {
     const { socket } = useSocketContext()
     const { currentLobby } = useCurrentLobbyContext()
+    const { sessionId } = useUserContext()
+    const {count, setCount} = useCountdown(10)
     const [state, setState] = useState<PlayerFrontState>({
         roundIndex: 1,
         roundFirstPlayerIndex:0,
@@ -31,12 +35,19 @@ export function SkullKing() {
     }, [socket])
 
     function updateGameState(state: PlayerFrontState) {
-        setState(state)
+        console.log('got gameState Event')
+        if (sessionId !== undefined) {
+            if (!(state.possibleActions.includes("setContract") && !state.possiblePlayers.includes(sessionId))) {
+                setCount(10)
+                setState(state)
+            }
+        }
     }
 
     return (
         <>
             <div>{JSON.stringify(state)}</div>
+            <h2>CountDown: {count}</h2>
             <h3>ROUND {state.roundIndex}</h3>
             <h3>First player this round: {currentLobby?.users[state.roundFirstPlayerIndex].username}</h3>
             <ul>

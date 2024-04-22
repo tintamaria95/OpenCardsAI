@@ -36,6 +36,7 @@ export function handleUserReplacedByBot(
 ) {
   lobby.replaceUserByBot(user)
   if (lobby.isEmpty()) {
+    lobby.game?.clearTimer()
     lobbyStore.deleteLobby(lobby['id'])
   } else {
     io.to(lobby['id']).emit('update-lobby', lobby.getFront())

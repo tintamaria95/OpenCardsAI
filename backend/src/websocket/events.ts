@@ -138,12 +138,17 @@ export function getSessionGame(lobby: Lobby){
 }
 
 export function reqUpdateGameState(
-  io: Server,
-  lobby: Lobby,
   game: AsyncGameSK,
   sessionId: string,
   action: Action
 ) {
   game.updateState(action, sessionId)
-  lobby.users.forEach(user => io.to(user.sessionId).emit('gameState', game.getPlayerState(user.sessionId)))
+  const isNextStateContractPhase = game.getPossibleActions().includes('setContract') && game.getPossiblePlayers().length !== game.getNbPlayers()
+  if (isNextStateContractPhase) {
+    console.log('includes setcontract / only to player')
+    game.emitUpdateToPlayer(sessionId)
+  } else {
+    game.emitUpdateToPlayers()
+    console.log('not includes setcontract / to all players')
+  }
 }

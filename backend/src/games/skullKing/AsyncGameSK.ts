@@ -7,6 +7,7 @@ import { AsyncGame, AsyncGameInterface } from '../commonClasses/AsyncGame'
 import { CardSK, SkColors } from './CardSK'
 import { ActionSetContract, ActionPlayCard } from './ActionSK'
 import { Action } from '../commonClasses/Action'
+import { Server } from 'socket.io'
 
 
 type PlayerFrontState = {
@@ -35,8 +36,9 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     private pile: PileSK
 
     private timer?: NodeJS.Timeout
+    private io?: Server
 
-    constructor(players: PlayerSK[], deck: DeckSK, timerDuration?: number) {
+    constructor(players: PlayerSK[], deck: DeckSK, timerDuration?: number, io?: Server) {
         super(players, deck)
         this.players = players
         
@@ -58,10 +60,17 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         gameLogger.debug(`Round first player: ${players[this.roundFirstPlayerIndex].getId()}`)
         this.distributeCardsToPlayers()
         this.setTimer(timerDuration)
+        if( io !== undefined){
+            this.io = io
+        }
         
     }
 
     public getPlayerState(playerId: string): PlayerFrontState {
+        let contracts: number[] = []
+        if (this.possibleActions.has('playCard')){
+            contracts = this.getContracts()
+        }
         return {
             // Public informations
             roundIndex: this.getRoundIndex(),
@@ -69,7 +78,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
             possibleActions: this.getPossibleActions(),
             possiblePlayers: this.getPossiblePlayers(),
             pileCards: this.getPileCards(),
-            contracts: this.getContracts(),
+            contracts: contracts,
             nbTricks: this.getNbTricks(),
             scores: this.getScores(),
             // Private information
@@ -91,9 +100,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     }
 
     public getContracts() {
-        const contracts: number[] = []
-        this.players.forEach(player => contracts.push(player.getContract()))
-        return contracts
+        return this.players.map(player => player.getContract())
     }
 
     public getNbTricks() {
@@ -140,12 +147,6 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         } else {
             gameLogger.error(`Id '${id}' undefined in id2Index object. Cannot return player hand (returned empty array).`)
             return []
-        }
-    }
-
-    private resetTimerForNextPlayer(){
-        if (this.timer !== undefined){
-            this.timer.refresh()
         }
     }
 
@@ -198,8 +199,8 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
                     this.possibleActions.add('playCard')
                     this.possiblePlayerIds.add(this.players[this.roundFirstPlayerIndex].getId())
                     gameLogger.debug('All players have set their contracts. Next phase: PlayCard')
+                    this.refreshTimerForNextPlayer()
                 }
-                this.resetTimerForNextPlayer()
             }
         } else if (action['type'] === 'playCard') {
             if (this.actionPlayCard(action, player)) {
@@ -209,7 +210,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
                 } else {
                     this.setForNextPlayer()
                 }
-                this.resetTimerForNextPlayer()
+                this.refreshTimerForNextPlayer()
             }
         } 
     }
@@ -309,7 +310,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         })
         if (this.roundIndex === this.nbRounds) {
             this.isGameEnded = true
-            gameLogger.debug('- GAME ENDED -')
+            this.endGame()
             return
         }
         this.roundIndex += 1
@@ -328,6 +329,11 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
             player.resetRoundStats()
         })
         this.distributeCardsToPlayers()
+    }
+
+    private endGame(){
+        this.clearTimer()
+        gameLogger.debug('- GAME ENDED -')
     }
 
     private distributeCardsToPlayers() {
@@ -394,10 +400,24 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
                     while (this.possibleActions.has('setContract')) {
                         this.updateStateRandomly()
                     }
+                    this.refreshTimerForNextPlayer()
                 } else {
                     this.updateStateRandomly()
                 }
+                this.emitUpdateToPlayers()
             }, timerDuration * 1000)
+        }
+    }
+
+    private refreshTimerForNextPlayer(){
+        if (this.timer !== undefined){
+            this.timer.refresh()
+        }
+    }
+
+    public clearTimer(){
+        if (this.timer !== undefined){
+            clearTimeout(this.timer)
         }
     }
 
@@ -407,6 +427,20 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
             this.updateState(randomUpdate.action, randomUpdate.playerId)
         } else {
             throw new Error('getRandomPossibleAction function returned an undefined object.')
+        }
+    }
+
+    public emitUpdateToPlayer(playerId: string){
+        const io = this.io
+        if (io !== undefined){
+            io.to(playerId).emit('gameState', this.getPlayerState(playerId))
+        }
+    }
+
+    public emitUpdateToPlayers() {
+        const io = this.io
+        if (io !== undefined) {
+            this.players.forEach(player => io.to(player.getId()).emit('gameState', this.getPlayerState(player.getId())))
         }
     }
 }

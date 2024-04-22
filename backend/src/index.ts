@@ -142,7 +142,7 @@ io.on('connection', async (socket) => {
     if (lobby === undefined) { return }
     const game = getSessionGame(lobby)
     if (game === undefined) { return }
-    reqUpdateGameState(io, lobby, game, sessionId, action)
+    reqUpdateGameState(game, sessionId, action)
   })
 
   socket.on('req-start-game', () => {
@@ -154,7 +154,7 @@ io.on('connection', async (socket) => {
     }
     const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.username))
     const deck = new DeckSK()
-    const game = new AsyncGameSK(players, deck)
+    const game = new AsyncGameSK(players, deck, 10, io)
     lobby.game = game
     io.to(lobby.id).emit('res-start-game')
   })
