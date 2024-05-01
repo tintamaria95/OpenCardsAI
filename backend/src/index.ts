@@ -5,7 +5,7 @@ import { Server } from 'socket.io'
 import * as path from 'path'
 import { lobbyLogger } from './logger'
 import { Lobby } from './lobby/Lobby'
-import { ROOMPUBLICLOBBY } from './websocket/emit'
+import { ROOMPUBLICLOBBY, emitResStartGame } from './websocket/emit'
 import * as cors from 'cors'
 import { InMemorySessionsStore } from './lobby/sessionStore'
 import { InMemoryLobbiesStore } from './lobby/lobbyStore'
@@ -90,7 +90,7 @@ io.on('connection', async (socket) => {
   })
 
   socket.on('update-username', (username: string) =>
-    updateUsername(username, sessionStore, session)
+    updateUsername(username, session)
   )
 
   socket.on('join-menu',  async () => {
@@ -129,15 +129,15 @@ io.on('connection', async (socket) => {
   )
 
   socket.on('req-get-gameState', () => {
-    const lobby = getSessionLobby(lobbyStore, session)
+    const lobby = getSessionLobby(socket, lobbyStore, session)
     if (lobby === undefined) { return }
     const game = getSessionGame(lobby)
     if (game === undefined) { return }
-    io.to(session.sessionId).emit('gameState', game.getPlayerState(session.sessionId))
+    io.to(socket.id).emit('gameState', game.getPlayerState(session.sessionId))
   })
 
   socket.on('req-update-gameState', (action: Action) => {
-    const lobby = getSessionLobby(lobbyStore, session)
+    const lobby = getSessionLobby(socket, lobbyStore, session)
     if (lobby === undefined) { return }
     const game = getSessionGame(lobby)
     if (game === undefined) { return }
@@ -145,22 +145,20 @@ io.on('connection', async (socket) => {
   })
 
   socket.on('req-start-game', () => {
-    const lobby = getSessionLobby(lobbyStore, session)
+    const lobby = getSessionLobby(socket, lobbyStore, session)
     if (lobby === undefined) {
       return
     }
-    console.log('LOG')
-    console.log(lobby.game === undefined)
     if (lobby.game !== undefined) {
       lobbyLogger.logger.warn(`Game already started: Received request to start game in lobby with id "${lobby.id} | sessionId ${sessionId}"`)
       return
     }
-    const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.username))
+    const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.userId, user.username))
     if (players.length >= AsyncGameSK.minPlayers && players.length <= AsyncGameSK.maxPlayers) {
       const deck = new DeckSK()
       const game = new AsyncGameSK(players, deck, 10, io)
       lobby.game = game
-      io.to(lobby.id).emit('res-start-game', 'success')
+      emitResStartGame(io, lobby.id, {status: 'success'})
       if (lobby.isPublic) {
         io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-updatelobby', lobby.getFront())
       }
@@ -171,7 +169,7 @@ io.on('connection', async (socket) => {
         maxPlayers: AsyncGameSK.maxPlayers,
         currentNbPlayers: players.length
       })
-      io.to(lobby.id).emit('res-start-game', 'fail', frontErrorMessage)
+      emitResStartGame(io, sessionId, {status: 'fail', errorMessage: frontErrorMessage})
     }
   })
 

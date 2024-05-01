@@ -13,14 +13,9 @@ import { ROOMPUBLICLOBBY } from './emit'
 
 export function updateUsername(
   username: string,
-  sessionStore: InMemorySessionsStore,
   session: User
 ) {
   session.username = username
-  sessionStore.saveSession(session.sessionId, {
-    ...session,
-    username: username
-  })
   lobbyLogger.userUpdatedUsername(session.sessionId, username)
 }
 
@@ -30,9 +25,11 @@ export async function joinMenu(
   lobbyStore: InMemoryLobbiesStore,
   session: User
 ) {
-  if (session.lobbyId !== undefined) {
-    await handleUserLeftLobby(io, socket, lobbyStore, session)
+  const lobbyId = session.socketId2LobbyId.get(socket.id) 
+  if (lobbyId !== undefined) {
+    await handleUserLeftLobby(io, socket, lobbyId, lobbyStore, session)
   }
+  io.to(socket.id).emit('update-lobby')
 }
 
 export function reqLobbyList(
@@ -55,7 +52,7 @@ export async function reqCreateLobby(
   session: User
 ) {
   const lobbyId = lobbyStore.saveLobby(session, lobbyName, isPublic)
-  session.lobbyId = lobbyId
+  session.socketId2LobbyId.set(socket.id, lobbyId)
   const lobby = lobbyStore.getLobby(lobbyId)
   if (lobby === undefined) {
     lobbyLogger.undefinedLobby(lobbyId)
@@ -65,7 +62,7 @@ export async function reqCreateLobby(
   await socket.leave(ROOMPUBLICLOBBY)
   await socket.join(lobbyId)
 
-  emitResJoinLobby(io, session.sessionId, {status: 'success', lobby: lobby.getFront()})
+  emitResJoinLobby(io, lobby.id, {status: 'success', lobby: lobby.getFront()})
   if (isPublic) {
     io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-addlobby', lobby.getFront())
   }
@@ -90,7 +87,7 @@ export async function reqJoinLobby(
     } else {
       if (lobby.isUserInLobby(session.sessionId)) {
         lobbyLogger.userAlreadyInLobby(session.sessionId, lobbyId)
-        emitResJoinLobby(io, session.sessionId, {status: 'fail', errorMessage: getFrontErrorMessage({type: 'userAlreadyInLobby'})})
+        emitResJoinLobby(io, socket.id, {status: 'fail', errorMessage: getFrontErrorMessage({type: 'userAlreadyInLobby'})})
       } else {
         handleAddUserToLobby(lobby, session, io, socket)
       }
@@ -109,13 +106,16 @@ export async function disconnect(
   session: User
 ) {
   lobbyLogger.userDisconnected(session.sessionId)
-  await handleUserLeftLobby(io, socket, lobbyStore, session)
+  const lobbyId = session.socketId2LobbyId.get(socket.id) 
+  if (lobbyId !== undefined) {
+    await handleUserLeftLobby(io, socket, lobbyId, lobbyStore, session)
+  }
 }
 
 /////////////////////////
 
-export function getSessionLobby(lobbyStore: InMemoryLobbiesStore, session: User){
-  const lobbyId = session.lobbyId
+export function getSessionLobby(socket: Socket, lobbyStore: InMemoryLobbiesStore, session: User){
+  const lobbyId = session.socketId2LobbyId.get(socket.id)
     if (lobbyId == undefined) {
       lobbyLogger.undefinedLobby(lobbyId)
       return
@@ -141,11 +141,12 @@ export function reqUpdateGameState(
   sessionId: string,
   action: Action
 ) {
-  game.updateState(action, sessionId)
-  const isNextStateContractPhase = game.getPossibleActions().includes('setContract') && game.getPossiblePlayers().length !== game.getNbPlayers()
-  if (isNextStateContractPhase) {
-    game.emitUpdateToPlayer(sessionId)
-  } else {
-    game.emitUpdateToPlayers()
+  const isGlobalUpdate = game.isNextActionEmitsGlobalUpdate()
+  if (game.updateState(action, sessionId)) {
+    if (isGlobalUpdate) {
+      game.emitUpdateToPlayers()
+    } else {
+      game.emitUpdateToPlayer(sessionId)
+    }
   }
 }

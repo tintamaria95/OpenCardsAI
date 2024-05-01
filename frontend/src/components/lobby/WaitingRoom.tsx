@@ -1,8 +1,8 @@
-import { useCurrentLobbyContext } from "../contexts/CurrentLobbyContext"
+import { useLobbyContext } from "./contexts/LobbyContext"
 import { Navigate, Link } from "react-router-dom"
 
 export function WaitingRoom(){
-    const { currentLobby } = useCurrentLobbyContext()
+    const { currentLobby } = useLobbyContext()
 
     return currentLobby == undefined
      ? (

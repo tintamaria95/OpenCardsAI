@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import LobbyToCreate from '../components/LobbyToCreate'
-import { useSocketContext } from '../contexts/SocketContext'
+import LobbyToCreate from '../components/lobby/LobbyToCreate'
+import { useSocketContext } from '../components/global/contexts/SocketContext'
 import { ChangeEvent, FormEvent } from 'react'
 import { useState } from 'react'
 

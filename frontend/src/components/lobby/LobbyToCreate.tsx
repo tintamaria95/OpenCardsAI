@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react'
-import { useSocketContext } from '../contexts/SocketContext'
-import { useUserContext } from '../contexts/UserContext'
+import { useSocketContext } from '../global/contexts/SocketContext'
+import { useUserContext } from './contexts/UserContext'
 import { ChangeEvent } from 'react'
 
 type LobbyToCreatePropType = {

@@ -13,16 +13,24 @@ export interface AsyncGameInterface {
 export class AsyncGame {
 
     protected deck: Deck
-    protected id2Index: Map<string, number>
-    protected possibleActions: Set<Action['type']>
-    protected possiblePlayerIds: Set<string>
 
     protected players: Player[]
     protected nbPlayers: number
+
+    protected id2Index: Map<string, number>
+    protected possibleActions: Set<Action['type']>
+    protected possiblePlayerSessionIds: Set<string>
+
     protected isGameEnded: boolean
 
+    // STATIC
     protected static minPlayers = 2
     protected static maxPlayers = 8
+
+    // FRONT ONLY
+    protected possiblePlayerUserIds: Set<string>
+    protected isResetFrontChrono: boolean
+
 
     constructor(players: Player[], deck: Deck){
         this.deck = deck
@@ -33,9 +41,12 @@ export class AsyncGame {
 
         this.id2Index =new Map<string, number>()
         this.possibleActions = new Set<Action['type']>(['setContract'])
-        this.possiblePlayerIds = new Set(Array.from({ length: players.length }, (_, index) => players[index].getId()))
+        this.possiblePlayerSessionIds = new Set(Array.from({ length: players.length }, (_, index) => players[index].getSessionId()))
 
         this.isGameEnded =  false
+
+        this.possiblePlayerUserIds = new Set(Array.from({ length: players.length }, (_, index) => players[index].getSessionId()))
+        this.isResetFrontChrono = true
     }
 
 
@@ -47,7 +58,7 @@ export class AsyncGame {
      * Security function which returns true if a player tries to play the wrong action or at the wrong moment.
      */
     public isActionAllowed(action: Action, playerId: string) {
-        if (this.possibleActions.has(action['type']) && this.possiblePlayerIds.has(playerId)) {
+        if (this.possibleActions.has(action['type']) && this.possiblePlayerSessionIds.has(playerId)) {
             return true
         }
         return false
@@ -61,7 +72,21 @@ export class AsyncGame {
         return [...this.possibleActions.values()]
     }
 
-    public getPossiblePlayers() {
-        return [...this.possiblePlayerIds.values()]
+    public getPossiblePlayerSessionIds() {
+        return [...this.possiblePlayerSessionIds.values()]
+    }
+
+    public getPossiblePlayerUserIds(){
+        return [...this.possiblePlayerUserIds.values()]
+    }
+
+    protected addPossiblePlayer(player: Player){
+        this.possiblePlayerSessionIds.add(player.getSessionId())
+        this.possiblePlayerUserIds.add(player.getUserId())
+    }
+
+    protected clearPossiblePlayer(){
+        this.possiblePlayerSessionIds.clear()
+        this.possiblePlayerUserIds.clear()
     }
 }

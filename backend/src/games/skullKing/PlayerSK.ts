@@ -9,8 +9,8 @@ export class PlayerSK extends Player{
   private bonusPoints = 0
   private gameScore = 0
 
-  constructor(userId: string, username: string) {
-    super(userId, username)
+  constructor(sessionId: string, userId: string, username: string) {
+    super(sessionId, userId, username)
     this.contract = -1
   }
 

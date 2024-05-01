@@ -53,31 +53,31 @@ export function handleUserReplacedByBot(
 export async function handleUserLeftLobby(
   io: Server,
   socket: Socket,
+  lobbyId: string,
   lobbyStore: InMemoryLobbiesStore,
   session: User
 ) {
-  if (session.lobbyId !== undefined) {
-    const lobby = lobbyStore.getLobby(session.lobbyId)
-    if (lobby !== undefined) {
-      await socket.leave(session.lobbyId)
-      const isGameStarted = lobby.game !== undefined
-      if (isGameStarted){
-        handleUserReplacedByBot(io, lobbyStore, lobby, session)
-      }
-      else {
-        handleRemoveUserFromLobby(io, lobbyStore, lobby, session)
-      }
-    }
+
+      const lobby = lobbyStore.getLobby(lobbyId)
+      if (lobby !== undefined) {
+        await socket.leave(lobbyId)
+        const isGameStarted = lobby.game !== undefined
+        if (isGameStarted) {
+          handleUserReplacedByBot(io, lobbyStore, lobby, session)
+        }
+        else {
+          handleRemoveUserFromLobby(io, lobbyStore, lobby, session)
+        }
   }
-  session.lobbyId = undefined
+  session.socketId2LobbyId.set(socket.id, undefined)
 }
 
 
-export async function handleAddUserToLobby(lobby: Lobby, session: User, io: Server, socket: Socket){
-  lobby.addUserToLobby(session)
+export async function handleAddUserToLobby(lobby: Lobby, user: User, io: Server, socket: Socket){
+  lobby.addUserToLobby(socket.id, user)
   await socket.leave(ROOMPUBLICLOBBY)
   await socket.join(lobby.id)
-  emitResJoinLobby(io, session.sessionId, {status: 'success', lobby: lobby.getFront()})
+  emitResJoinLobby(io, lobby.id, {status: 'success', lobby: lobby.getFront()})
   if (lobby.isPublic) {
     io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-updatelobby', lobby.getFront())
   }

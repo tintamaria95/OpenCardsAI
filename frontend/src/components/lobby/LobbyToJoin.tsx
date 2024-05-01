@@ -1,5 +1,5 @@
-import { LobbyFrontType } from '../types'
-import { useSocketContext } from '../contexts/SocketContext'
+import { LobbyFrontType } from '../../types'
+import { useSocketContext } from '../global/contexts/SocketContext'
 
 export default function LobbyToJoin({ id, name, users, isGameStarted }: LobbyFrontType) {
   const { socket } = useSocketContext()

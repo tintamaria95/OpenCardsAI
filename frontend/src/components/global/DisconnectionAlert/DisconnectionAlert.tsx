@@ -1,6 +1,6 @@
 import './DisconnectionAlert.css'
 import { useEffect, useState } from 'react'
-import { useSocketContext } from '../../contexts/SocketContext'
+import { useSocketContext } from '../contexts/SocketContext'
 
 export function DisconnectionAlert() {
   const { socket } = useSocketContext()

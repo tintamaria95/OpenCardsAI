@@ -7,17 +7,16 @@ import {
 } from 'react-router-dom'
 import './App.css'
 import { useEffect } from 'react'
-import { UserContextProvider } from '../contexts/UserContextProvider'
-import { SocketContext } from '../contexts/SocketContext'
-import { DisconnectionAlert } from '../components/DisconnectionAlert/DisconnectionAlert'
+import { UserContextProvider } from '../components/lobby/contexts/UserContextProvider'
+import { DisconnectionAlert } from '../components/global/DisconnectionAlert/DisconnectionAlert'
 import CurrentLobby from '../pages/CurrentLobby'
 import Home from '../pages/Home'
 import PublicLobby from '../pages/PublicLobby'
 import PrivateLobby from '../pages/PrivateLobby'
 import socket from '../socket'
-import { CurrentLobbyContextProvider } from '../contexts/CurrentLobbyContextProvider'
-import { GlobalErrorElement } from '../components/GlobalErrorElement'
-import { useCurrentLobbyContext } from '../contexts/CurrentLobbyContext'
+import { LobbyContextProvider } from '../components/lobby/contexts/LobbyContextProvider'
+import { GlobalErrorElement } from '../components/global/GlobalErrorElement'
+import { SocketContextProvider } from '../components/global/contexts/SocketContextprovider'
 
 function Root() {
   return (
@@ -41,11 +40,9 @@ function App() {
 }
 
 function Menu() {
-  const { setCurrentLobby } = useCurrentLobbyContext()
   useEffect(() => {
-    setCurrentLobby(undefined)
     socket.emit('join-menu')
-  }, [setCurrentLobby])
+  }, [])
   return <Outlet />
 }
 
@@ -62,14 +59,16 @@ function AppLogic() {
 
   return (
     <>
-      <SocketContext.Provider value={{ socket: socket }}>
-        <DisconnectionAlert />
-        <UserContextProvider>
-          <CurrentLobbyContextProvider>
-            <Outlet />
-          </CurrentLobbyContextProvider>
-        </UserContextProvider>
-      </SocketContext.Provider>
+      <SocketContextProvider>
+        <>
+          <DisconnectionAlert />
+          <UserContextProvider>
+            <LobbyContextProvider>
+              <Outlet />
+            </LobbyContextProvider>
+          </UserContextProvider>
+        </>
+      </SocketContextProvider>
     </>
   )
 }

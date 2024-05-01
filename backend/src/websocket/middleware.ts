@@ -3,6 +3,7 @@ import { ExtendedError } from 'socket.io/dist/namespace'
 import { randomUUID } from 'crypto'
 import { lobbyLogger } from '../logger'
 import { InMemorySessionsStore } from '../lobby/sessionStore'
+import { User } from '../lobby/User'
 
 export function checkSessionId(
   socket: Socket,
@@ -32,14 +33,14 @@ export function checkSessionId(
   const username = 'User' + Math.floor(Math.random() * 1000).toString()
 
   socket.handshake.auth.sessionId = newSessionId
-  sessionStore.saveSession(newSessionId, {
-    sessionId: newSessionId,
-    userId: newUserId,
-    username: username,
-    imageName: '_',
-    createdAt: Date.now(),
-    isBot: false
-  })
+  sessionStore.saveSession(
+    newSessionId,
+    new User(newSessionId,
+      newUserId,
+      username,
+      '_',
+      false)
+  )
   if (isVerbose) {
     lobbyLogger.createdNewSession(newSessionId, newUserId, username)
   }

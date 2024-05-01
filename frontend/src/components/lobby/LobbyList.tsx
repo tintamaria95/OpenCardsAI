@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import LobbyToJoin from './LobbyToJoin'
-import { LobbyFrontType } from '../types'
+import { LobbyFrontType } from '../../types'
 import LobbyToCreate from './LobbyToCreate'
-import { useSocketContext } from '../contexts/SocketContext'
+import { useSocketContext } from '../global/contexts/SocketContext'
 
 export default function LobbyList() {
   const [lobbyList, setLobbyList] = useState<LobbyFrontType[]>([])

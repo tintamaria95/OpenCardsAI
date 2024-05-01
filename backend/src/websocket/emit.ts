@@ -1,25 +1,20 @@
 import { Server } from "socket.io"
-import { Lobby, LobbyFrontType } from "../lobby/Lobby"
+import { ResJoinLobbyFailArgs, ResJoinLobbySuccessArgs, ResStartGameFailArgs, ResStartGameSuccessArgs } from "./responseTypes"
 
 
 export const ROOMPUBLICLOBBY = 'publiclobby'
 
-/// LOBBY
 
-type ResJoinLobbySuccessArgs = {
-    status: 'success',
-    lobby: LobbyFrontType
-}
 
-type ResJoinLobbyFailArgs = {
-    status: 'fail',
-    errorMessage: string
-}
-
-export function emitResJoinLobby(io: Server, sessionId: string, args: ResJoinLobbySuccessArgs | ResJoinLobbyFailArgs){
+export function emitResJoinLobby(io: Server, to: string, args: ResJoinLobbySuccessArgs | ResJoinLobbyFailArgs){
     if (args['status'] === 'success'){
-        io.to(args['lobby']['id']).emit('res-join-lobby', args)
+        io.to(to).emit('res-join-lobby', args)
     } else {
-        io.to(sessionId).emit('res-join-lobby', args)
+        io.to(to).emit('res-join-lobby', args)
     }
+}
+
+
+export function emitResStartGame(io: Server, to: string, args: ResStartGameSuccessArgs | ResStartGameFailArgs){
+   io.to(to).emit('res-start-game', args)
 }

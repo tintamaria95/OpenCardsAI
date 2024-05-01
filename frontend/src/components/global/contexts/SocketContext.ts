@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 import { Socket } from 'socket.io-client'
-import socket from '../socket/index'
+import socket from '../../../socket'
 
 type SocketContent = {
   socket: Socket

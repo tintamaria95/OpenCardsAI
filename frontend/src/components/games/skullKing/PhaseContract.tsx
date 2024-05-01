@@ -1,5 +1,5 @@
-import { ActionSetContract } from "../../action/ActionSK"
-import { useSocketContext } from "../../contexts/SocketContext"
+import { ActionSetContract } from "../../../action/ActionSK"
+import { useSocketContext } from "../../global/contexts/SocketContext"
 
 type PhaseContractProp = {
     maxContractValue: number,
