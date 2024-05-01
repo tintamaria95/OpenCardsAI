@@ -1,7 +1,7 @@
 import { useState, ReactElement, useEffect } from 'react'
 import { UserContext } from './UserContext'
-import { useSocketContext } from './SocketContext'
-import { UserFrontType } from '../types'
+import { useSocketContext } from '../../global/contexts/SocketContext'
+import { UserFrontType } from '../../../types'
 
 function initFromStorage(key: string) {
   const value = localStorage.getItem(key)

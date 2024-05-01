@@ -19,6 +19,7 @@ type PlayerFrontState = {
     contracts: number[]
     nbTricks: number[]
     scores: number[]
+    isResetChrono: boolean
     // Private information
     playerHand: string[]
 }
@@ -56,11 +57,11 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         this.pile = new PileSK()
 
         players.forEach((player, index) => {
-            this.id2Index.set(player.getId(), index)
+            this.id2Index.set(player.getSessionId(), index)
         })
 
         gameLogger.debug('- GAME STARTS -')
-        gameLogger.debug(`Round first player: ${players[this.roundFirstPlayerIndex].getId()}`)
+        gameLogger.debug(`Round first player: ${players[this.roundFirstPlayerIndex].getSessionId()}`)
         this.distributeCardsToPlayers()
         this.setTimer(timerDuration)
         if( io !== undefined){
@@ -79,11 +80,12 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
             roundIndex: this.getRoundIndex(),
             roundFirstPlayerIndex: this.getRoundFirstPlayerIndex(),
             possibleActions: this.getPossibleActions(),
-            possiblePlayers: this.getPossiblePlayers(),
+            possiblePlayers: this.getPossiblePlayerUserIds(),
             pileCards: this.getPileCards(),
             contracts: contracts,
             nbTricks: this.getNbTricks(),
             scores: this.getScores(),
+            isResetChrono: this.isResetFrontChrono,
             // Private information
             playerHand: this.getPlayerCardIds(playerId)
 
@@ -173,25 +175,25 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         }
     }
 
-    /**
-     * Method which can update the current state given a player id and action.
-     * @param actionType Must be set to 'setContract' or 'playCard' (TODO add bloodyMary choice later)
-     * @param action 
-     * @param playerId 
-     */
+/**
+ * 
+ * @param action 
+ * @param playerId 
+ * @returns Return true if calling the function updated the state (changes happened).
+ */
     public updateState(action: Action, playerId: string) {
         if (this.isGameEnded) {
             gameLogger.warn('Game ended - No action allowed anymore')
-            return
+            return false
         }
         if (!this.isActionAllowed(action, playerId)) {
             gameLogger.warn(`State update not allowed | actionType: ${action['type']}, playerId: ${playerId}`)
-            return
+            return false
         }
         const playerIndex = this.id2Index.get(playerId)
         if (playerIndex === undefined) {
             gameLogger.error(`Logic error: playerId '${playerId}' undefined in map object 'id2Index'`)
-            return
+            return false
         }
         const player = this.players[playerIndex]
         if (action['type'] === 'setContract') {
@@ -200,10 +202,11 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
                 if (this.isAllContractsSet()) {
                     this.possibleActions.clear()
                     this.possibleActions.add('playCard')
-                    this.possiblePlayerIds.add(this.players[this.roundFirstPlayerIndex].getId())
+                    this.addPossiblePlayer(this.players[this.roundFirstPlayerIndex])
                     gameLogger.debug('All players have set their contracts. Next phase: PlayCard')
                     this.refreshTimerForNextPlayer()
                 }
+                return true
             }
         } else if (action['type'] === 'playCard') {
             if (this.actionPlayCard(action, player)) {
@@ -214,14 +217,16 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
                     this.setForNextPlayer()
                 }
                 this.refreshTimerForNextPlayer()
+                return true
             }
-        } 
+        }
+        return false
     }
 
     private actionSetContract(action: ActionSetContract, player: PlayerSK) {
         if (action['contractValue'] >= 0 && action['contractValue'] <= this.roundIndex && Number.isInteger(action['contractValue'])) {
             player.setContract(action['contractValue'])
-            this.possiblePlayerIds.delete(player.getId())
+            this.possiblePlayerSessionIds.delete(player.getSessionId())
             return true
         } else {
             gameLogger.warn(`Cannot set a contract of value '${action['contractValue']}' at round ${this.roundIndex}`)
@@ -248,12 +253,12 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
                         chosenCard.category = 'character'
                     }
                 }
-                gameLogger.debug(`'${player.getId()}' played ${chosenCard.id}`)
+                gameLogger.debug(`'${player.getSessionId()}' played ${chosenCard.id}`)
                 this.pile.addCard(chosenCard)
                 return true
             }
         } else {
-            gameLogger.warn(`'${player.getId()}'cannot play card of id '${action['cardId']}'`)
+            gameLogger.warn(`'${player.getSessionId()}'cannot play card of id '${action['cardId']}'`)
         }
         return false
     }
@@ -262,30 +267,28 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
      * This methods updates the class variables to allow the next player to do an action.
      */
     private setForNextPlayer() {
-        const currentPlayerId = [...this.possiblePlayerIds][0]
+        const currentPlayerId = [...this.possiblePlayerSessionIds][0]
         const currentPlayerIndex = this.id2Index.get(currentPlayerId)
         if (currentPlayerIndex === undefined) {
             gameLogger.error(`Unknown player Id '${currentPlayerId}'`)
             return
         }
         const nextPlayerIndex = (currentPlayerIndex + 1) % this.nbPlayers
-        const nextPlayerId = this.players[nextPlayerIndex].getId()
-        this.possiblePlayerIds.clear()
-        this.possiblePlayerIds.add(nextPlayerId)
+        this.clearPossiblePlayer()
+        this.addPossiblePlayer(this.players[nextPlayerIndex])
     }
 
     private endTrick() {
         // this.pile.show()
         gameLogger.debug('winning card: ' + this.pile.getCurrentWinningCardIndex().toString())
         this.trickFirstPlayerIndex = (this.trickFirstPlayerIndex + this.pile.getCurrentWinningCardIndex()) % this.nbPlayers
-        gameLogger.debug('Trick winner: ' + this.players[this.trickFirstPlayerIndex].getId())
+        gameLogger.debug('Trick winner: ' + this.players[this.trickFirstPlayerIndex].getSessionId())
         this.players[this.trickFirstPlayerIndex].incrementWonTricks()
         this.players[this.trickFirstPlayerIndex].addToBonusPoints(this.pile.getBonusPoints())
         this.trickIndex += 1
         this.pile = new PileSK()
-        this.possiblePlayerIds.clear()
-        const trickFirstPlayerId = this.players[this.trickFirstPlayerIndex].getId()
-        this.possiblePlayerIds.add(trickFirstPlayerId)
+        this.clearPossiblePlayer()
+        this.addPossiblePlayer(this.players[this.trickFirstPlayerIndex])
         if (this.trickIndex === this.roundIndex) {
             gameLogger.debug(`Round ${this.roundIndex} ended`)
             this.endRound()
@@ -298,7 +301,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     }
 
     private isAllContractsSet() {
-        return this.possiblePlayerIds.size === 0
+        return this.possiblePlayerSessionIds.size === 0
     }
 
     /**
@@ -307,7 +310,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     private endRound() {
 
         this.players.forEach(player => {
-            gameLogger.debug(`Player ${player.getId()}: ${player.getWonTricks()} / ${player.getContract()}`)
+            gameLogger.debug(`Player ${player.getSessionId()}: ${player.getWonTricks()} / ${player.getContract()}`)
             player.addToGameScore(this.score(this.roundIndex, player.getContract(), player.getWonTricks(), player.getBonusPoints()))
             gameLogger.debug(`Score : ${player.getGameScore()}`)
         })
@@ -321,15 +324,15 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         gameLogger.debug(`---------- `)
         gameLogger.debug(`Start round ${this.roundIndex}`)
         this.roundFirstPlayerIndex = (this.roundFirstPlayerIndex + 1) % this.nbPlayers
-        gameLogger.debug(`Round first player: ${this.players[this.roundFirstPlayerIndex].getId()}`)
+        gameLogger.debug(`Round first player: ${this.players[this.roundFirstPlayerIndex].getSessionId()}`)
         this.trickFirstPlayerIndex = this.roundFirstPlayerIndex
         this.deck.shuffle()
         this.possibleActions.clear()
         this.possibleActions.add('setContract')
-        this.possiblePlayerIds.clear()
+        this.clearPossiblePlayer()
         this.players.forEach(player => {
-            this.possiblePlayerIds.add(player.getId())
             player.resetRoundStats()
+            this.addPossiblePlayer(player)
         })
         this.distributeCardsToPlayers()
     }
@@ -366,9 +369,9 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     }
 
     public getRandomPossibleAction(): {playerId: string, action:Action} | undefined{
-        const possiblePlayerIds = [...this.possiblePlayerIds.values()]
-        const playerChoiceIndex = Math.floor(Math.random() * possiblePlayerIds.length)
-        const playerId = possiblePlayerIds[playerChoiceIndex]
+        const possiblePlayerSessionIds = [...this.possiblePlayerSessionIds.values()]
+        const playerChoiceIndex = Math.floor(Math.random() * possiblePlayerSessionIds.length)
+        const playerId = possiblePlayerSessionIds[playerChoiceIndex]
         if (this.possibleActions.has('setContract')){
             return {playerId: playerId, action: {type: 'setContract', contractValue: Math.floor(Math.random() * (this.roundIndex + 1))}}
         } else {
@@ -436,6 +439,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     public emitUpdateToPlayer(playerId: string){
         const io = this.io
         if (io !== undefined){
+            this.isResetFrontChrono = false
             io.to(playerId).emit('gameState', this.getPlayerState(playerId))
         }
     }
@@ -443,7 +447,15 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     public emitUpdateToPlayers() {
         const io = this.io
         if (io !== undefined) {
-            this.players.forEach(player => io.to(player.getId()).emit('gameState', this.getPlayerState(player.getId())))
+            this.isResetFrontChrono = true
+            this.players.forEach(player => io.to(player.getSessionId()).emit('gameState', this.getPlayerState(player.getSessionId())))
         }
+    }
+
+    public isNextActionEmitsGlobalUpdate() {
+        return (
+            !this.getPossibleActions().includes('setContract') ||
+            (this.getPossibleActions().includes('setContract') && this.getPossiblePlayerSessionIds().length === 1)
+        )
     }
 }

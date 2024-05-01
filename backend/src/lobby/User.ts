@@ -13,9 +13,8 @@ export class User {
     imageName: string
     isBot: boolean
 
+    socketId2LobbyId: Map<string, string | undefined>
     createdAt: number
-
-    lobbyId?: string
 
     constructor(sessionId: string, userId: string, username: string, imageName: string, isBot: boolean){
         this.sessionId = sessionId
@@ -24,6 +23,7 @@ export class User {
         this.imageName = imageName
         this.isBot = isBot
 
+        this.socketId2LobbyId = new  Map<string, string>()
         this.createdAt = Date.now()
 
     }

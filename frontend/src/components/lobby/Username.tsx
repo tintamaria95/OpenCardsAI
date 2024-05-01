@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useState } from 'react'
-import { useSocketContext } from '../contexts/SocketContext'
-import { useUserContext } from '../contexts/UserContext'
+import { useSocketContext } from '../global/contexts/SocketContext'
+import { useUserContext } from './contexts/UserContext'
 
 export function Username() {
   const { username, setUsername } = useUserContext()

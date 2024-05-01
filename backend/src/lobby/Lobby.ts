@@ -34,7 +34,7 @@ export class Lobby {
                     userId: user.userId,
                     imageName: user.imageName,
                     username: user.username,
-                    lobbyId: user.lobbyId
+                    lobbyId: this.id
                 }
             })
         return {
@@ -73,9 +73,9 @@ export class Lobby {
         return false
     }
 
-    addUserToLobby(user: User) {
+    addUserToLobby(socketId: string, user: User) {
         this.users.set(user.sessionId, user)
-        user.lobbyId = this.id
+        user.socketId2LobbyId.set(socketId, this.id)
     }
 
     removeUserfromLobby(user: User) {

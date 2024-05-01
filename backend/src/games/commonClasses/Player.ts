@@ -1,18 +1,24 @@
 import { Card } from "./Card"
 
 export class Player {
-  protected id: string
+  protected sessionId: string
+  protected userId: string
   protected username: string
   protected cards: Card[]
 
-  constructor(userId: string, username: string){
-    this.id = userId
+  constructor(sessionId: string, userId: string, username: string){
+    this.sessionId = sessionId
+    this.userId = userId
     this.username = username
     this.cards = []
   }
 
-  getId(){
-    return this.id
+  getSessionId(){
+    return this.sessionId
+  }
+
+  getUserId(){
+    return this.userId
   }
 
   getUsername(){

@@ -1,6 +1,6 @@
 import { ReactElement, useState } from "react";
-import { useSocketContext } from "../../contexts/SocketContext";
-import { ActionPlayCard } from "../../action/ActionSK";
+import { useSocketContext } from "../../global/contexts/SocketContext";
+import { ActionPlayCard } from "../../../action/ActionSK";
 
 type PlayableProp = {
     card: ReactElement,

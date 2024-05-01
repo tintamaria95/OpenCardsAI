@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Username } from '../components/Username'
+import { Username } from '../components/lobby/Username'
 
 function Home() {
   return (

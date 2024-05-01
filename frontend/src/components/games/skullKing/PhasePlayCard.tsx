@@ -1,4 +1,4 @@
-import { useCurrentLobbyContext } from "../../contexts/CurrentLobbyContext"
+import { useLobbyContext } from "../../lobby/contexts/LobbyContext"
 import { Playable } from "./Playable"
 
 type PhasePlayCardProp = {
@@ -9,7 +9,7 @@ type PhasePlayCardProp = {
 }
 
 export function PhasePlayCard({ nbTricks, contracts, pileCards, playerHand }: PhasePlayCardProp) {
-    const { currentLobby } = useCurrentLobbyContext()
+    const { currentLobby } = useLobbyContext()
     return (
         <>
             <h2>Play card phase</h2>
