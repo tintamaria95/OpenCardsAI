@@ -7,11 +7,7 @@ export const ROOMPUBLICLOBBY = 'publiclobby'
 
 
 export function emitResJoinLobby(io: Server, to: string, args: ResJoinLobbySuccessArgs | ResJoinLobbyFailArgs){
-    if (args['status'] === 'success'){
-        io.to(to).emit('res-join-lobby', args)
-    } else {
-        io.to(to).emit('res-join-lobby', args)
-    }
+    io.to(to).emit('res-join-lobby', args)
 }
 
 

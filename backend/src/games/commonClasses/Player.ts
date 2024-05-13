@@ -1,16 +1,24 @@
 import { Card } from "./Card"
 
 export class Player {
+  
   protected sessionId: string
   protected userId: string
   protected username: string
   protected cards: Card[]
+  protected seatNumber: number
 
-  constructor(sessionId: string, userId: string, username: string){
+  private socketId?: string
+
+  constructor(sessionId: string, userId: string, username: string, socketId?: string){
+    
     this.sessionId = sessionId
     this.userId = userId
     this.username = username
     this.cards = []
+    this.seatNumber = 0
+
+    this.socketId = socketId
   }
 
   getSessionId(){
@@ -29,6 +37,10 @@ export class Player {
     return this.cards
   }
 
+  getSocketId(){
+    return this.socketId
+  }
+
   getCardIds(){
     const hand: string[] = []
     this.cards.forEach(card => {
@@ -38,6 +50,10 @@ export class Player {
 
   setCards(cards: Card[]) {
     this.cards = cards
+  }
+
+  setSeat(seatNumber: number){
+    this.seatNumber = seatNumber
   }
 
   playCard(i: number) {

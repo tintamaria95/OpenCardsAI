@@ -1,3 +1,5 @@
+import { randomUUID } from "crypto"
+
 export type UserFrontType = {
     userId: string
     username: string
@@ -13,17 +15,20 @@ export class User {
     imageName: string
     isBot: boolean
 
-    socketId2LobbyId: Map<string, string | undefined>
+    socketId2LobbyId: Map<string, string>
+    lobbyId2SocketId: Map<string, string>
     createdAt: number
 
-    constructor(sessionId: string, userId: string, username: string, imageName: string, isBot: boolean){
-        this.sessionId = sessionId
-        this.userId = userId
+    constructor(username: string, imageName: string, isBot: boolean){
+
         this.username = username
         this.imageName = imageName
         this.isBot = isBot
 
+        this.sessionId = randomUUID()
+        this.userId = randomUUID()
         this.socketId2LobbyId = new  Map<string, string>()
+        this.lobbyId2SocketId = new  Map<string, string>()
         this.createdAt = Date.now()
 
     }

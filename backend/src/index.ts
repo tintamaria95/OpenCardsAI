@@ -26,6 +26,7 @@ import { Action } from './games/commonClasses/Action'
 import { PlayerSK } from './games/skullKing/PlayerSK'
 import { DeckSK } from './games/skullKing/DeckSK'
 import { getFrontErrorMessage } from './utils'
+import { gameConfig } from './games/skullKing/config'
 
 const PORT = 3000
 
@@ -118,13 +119,13 @@ io.on('connection', async (socket) => {
     )
   )
 
-  socket.on('req-join-lobby', async (lobbyId: Lobby['id']) =>
+  socket.on('req-join-lobby', async (lobbyId?: Lobby['id']) =>
     await reqJoinLobby(
-      lobbyId,
       io,
       socket,
       lobbyStore,
-      session
+      session,
+      lobbyId
     )
   )
 
@@ -133,7 +134,7 @@ io.on('connection', async (socket) => {
     if (lobby === undefined) { return }
     const game = getSessionGame(lobby)
     if (game === undefined) { return }
-    io.to(socket.id).emit('gameState', game.getPlayerState(session.sessionId))
+    io.to(socket.id).emit('gameState', game.getPlayerState(session.sessionId, true))
   })
 
   socket.on('req-update-gameState', (action: Action) => {
@@ -141,7 +142,7 @@ io.on('connection', async (socket) => {
     if (lobby === undefined) { return }
     const game = getSessionGame(lobby)
     if (game === undefined) { return }
-    reqUpdateGameState(game, sessionId, action)
+    reqUpdateGameState(game, action, sessionId, socket.id)
   })
 
   socket.on('req-start-game', () => {
@@ -153,10 +154,10 @@ io.on('connection', async (socket) => {
       lobbyLogger.logger.warn(`Game already started: Received request to start game in lobby with id "${lobby.id} | sessionId ${sessionId}"`)
       return
     }
-    const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.userId, user.username))
+    const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.userId, user.username, user.lobbyId2SocketId.get(lobby.id)))
     if (players.length >= AsyncGameSK.minPlayers && players.length <= AsyncGameSK.maxPlayers) {
       const deck = new DeckSK()
-      const game = new AsyncGameSK(players, deck, 10, io)
+      const game = new AsyncGameSK(players, deck, gameConfig, io)
       lobby.game = game
       emitResStartGame(io, lobby.id, {status: 'success'})
       if (lobby.isPublic) {
@@ -169,7 +170,7 @@ io.on('connection', async (socket) => {
         maxPlayers: AsyncGameSK.maxPlayers,
         currentNbPlayers: players.length
       })
-      emitResStartGame(io, sessionId, {status: 'fail', errorMessage: frontErrorMessage})
+      emitResStartGame(io, socket.id, {status: 'fail', errorMessage: frontErrorMessage})
     }
   })
 

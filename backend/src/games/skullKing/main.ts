@@ -15,11 +15,11 @@ for (let index = 0; index < nbTests; index++) {
   bar.update(index + 1)
   const deck = new DeckSK()
 
-  const player1 = new PlayerSK('1', 'martin')
-  const player2 = new PlayerSK('2', 'charles')
+  const player1 = new PlayerSK('1', '1', 'martin')
+  const player2 = new PlayerSK('2', '2', 'charles')
   // const player4 = new PlayerSK('3', 'max')
   // const player5 = new PlayerSK('4', 'lucas')
-  const game = new AsyncGameSK([player1, player2], deck, 3)
+  const game = new AsyncGameSK([player1, player2], deck, {nbRounds: 3, timerDuration: 20})
 
   // while (!game.isEnded()) {
     const update = game.getRandomPossibleAction()

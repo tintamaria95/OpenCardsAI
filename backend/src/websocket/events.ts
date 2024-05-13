@@ -25,11 +25,10 @@ export async function joinMenu(
   lobbyStore: InMemoryLobbiesStore,
   session: User
 ) {
-  const lobbyId = session.socketId2LobbyId.get(socket.id) 
+  const lobbyId = session.socketId2LobbyId.get(socket.id)
   if (lobbyId !== undefined) {
     await handleUserLeftLobby(io, socket, lobbyId, lobbyStore, session)
   }
-  io.to(socket.id).emit('update-lobby')
 }
 
 export function reqLobbyList(
@@ -49,53 +48,61 @@ export async function reqCreateLobby(
   io: Server,
   socket: Socket,
   lobbyStore: InMemoryLobbiesStore,
-  session: User
+  user: User
 ) {
-  const lobbyId = lobbyStore.saveLobby(session, lobbyName, isPublic)
-  session.socketId2LobbyId.set(socket.id, lobbyId)
-  const lobby = lobbyStore.getLobby(lobbyId)
-  if (lobby === undefined) {
-    lobbyLogger.undefinedLobby(lobbyId)
-    return
-  }
+  const lobby = lobbyStore.saveLobby(lobbyName, isPublic, user)
+  user.socketId2LobbyId.set(socket.id, lobby.id)
+  user.lobbyId2SocketId.set(lobby.id, socket.id)
 
   await socket.leave(ROOMPUBLICLOBBY)
-  await socket.join(lobbyId)
+  await socket.join(lobby.id)
 
-  emitResJoinLobby(io, lobby.id, {status: 'success', lobby: lobby.getFront()})
+  emitResJoinLobby(io, lobby.id, { status: 'success', lobby: lobby.getFront() })
   if (isPublic) {
     io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-addlobby', lobby.getFront())
   }
 }
 
 export async function reqJoinLobby(
-  lobbyId: Lobby['id'],
   io: Server,
   socket: Socket,
   lobbyStore: InMemoryLobbiesStore,
-  session: User
+  user: User,
+  lobbyId?: Lobby['id']
 ) {
-  const lobby = lobbyStore.getLobby(lobbyId)
-  if (lobby !== undefined) {
-    const isGameStarted = lobby.game !== undefined
-    if (isGameStarted) {
-      if (lobby.isBotInLobby(session.sessionId)){
-        handleAddUserToLobby(lobby, session, io, socket)
+  if (lobbyId !== undefined) {
+    const lobby = lobbyStore.getLobby(lobbyId)
+    if (lobby !== undefined) {
+      const isGameStarted = lobby.game !== undefined
+      if (isGameStarted) {
+        if (lobby.isBotInLobby(user.sessionId)) {
+          handleAddUserToLobby(lobby, user, io, socket)
+        } else {
+          emitResJoinLobby(io, socket.id, { status: 'fail', errorMessage: getFrontErrorMessage({ type: 'gameAlreadyStartedError' }) })
+        }
       } else {
-        emitResJoinLobby(io, session.sessionId, {status: 'fail', errorMessage: getFrontErrorMessage({type: 'gameAlreadyStartedError'})})
-      }
-    } else {
-      if (lobby.isUserInLobby(session.sessionId)) {
-        lobbyLogger.userAlreadyInLobby(session.sessionId, lobbyId)
-        emitResJoinLobby(io, socket.id, {status: 'fail', errorMessage: getFrontErrorMessage({type: 'userAlreadyInLobby'})})
-      } else {
-        handleAddUserToLobby(lobby, session, io, socket)
+        if (lobby.isUserInLobby(user.sessionId)) {
+          lobbyLogger.userAlreadyInLobby(user.sessionId, lobby.id)
+          emitResJoinLobby(io, socket.id, { status: 'fail', errorMessage: getFrontErrorMessage({ type: 'userAlreadyInLobby' }) })
+        } else {
+          handleAddUserToLobby(lobby, user, io, socket)
+        }
       }
     }
-
   } else {
-    lobbyLogger.undefinedLobby(lobbyId)
-    io.to(socket.id).emit('res-join-lobby', 'undefinedLobby', undefined)
+    const publicWaitingLobbies = lobbyStore.getAllLobbies(true, false)
+    const availablePublicWaitingLobbies = publicWaitingLobbies.filter(lobby => lobby.getNonBotPlayers().findIndex(currUser => currUser.sessionId === user.sessionId) === -1)
+    if (availablePublicWaitingLobbies.length > 0) {
+      const lobby = availablePublicWaitingLobbies[0]
+      handleAddUserToLobby(lobby, user, io, socket)
+    } else {
+      const lobby = lobbyStore.saveLobby(`${user.username}'s lobby`, true, user)
+      user.socketId2LobbyId.set(socket.id, lobby.id)
+      user.lobbyId2SocketId.set(lobby.id, socket.id)
+      await socket.join(lobby.id)
+      emitResJoinLobby(io, lobby.id, { status: 'success', lobby: lobby.getFront() })
+      io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-addlobby', lobby.getFront())
+    }
   }
 }
 
@@ -103,50 +110,39 @@ export async function disconnect(
   io: Server,
   socket: Socket,
   lobbyStore: InMemoryLobbiesStore,
-  session: User
+  user: User
 ) {
-  lobbyLogger.userDisconnected(session.sessionId)
-  const lobbyId = session.socketId2LobbyId.get(socket.id) 
+  lobbyLogger.userDisconnected(user.sessionId)
+  const lobbyId = user.socketId2LobbyId.get(socket.id)
   if (lobbyId !== undefined) {
-    await handleUserLeftLobby(io, socket, lobbyId, lobbyStore, session)
+    await handleUserLeftLobby(io, socket, lobbyId, lobbyStore, user)
   }
 }
 
 /////////////////////////
 
-export function getSessionLobby(socket: Socket, lobbyStore: InMemoryLobbiesStore, session: User){
+export function getSessionLobby(socket: Socket, lobbyStore: InMemoryLobbiesStore, session: User) {
   const lobbyId = session.socketId2LobbyId.get(socket.id)
-    if (lobbyId == undefined) {
-      lobbyLogger.undefinedLobby(lobbyId)
-      return
-    }
-    const lobby = lobbyStore.getLobby(lobbyId)
-    if (lobby === undefined) {
-      lobbyLogger.undefinedLobby(lobbyId)
-      return
-    }
-    return lobby
+  if (lobbyId == undefined) {
+    lobbyLogger.undefinedLobby(lobbyId)
+    return
+  }
+  return lobbyStore.getLobby(lobbyId)
 }
-export function getSessionGame(lobby: Lobby){
-    const game = lobby.game
-    if (game === undefined) {
-      lobbyLogger.undefinedGame(lobby.id)
-      return
-    }
-    return game
+export function getSessionGame(lobby: Lobby) {
+  const game = lobby.game
+  if (game === undefined) {
+    lobbyLogger.undefinedGame(lobby.id)
+    return
+  }
+  return game
 }
 
 export function reqUpdateGameState(
   game: AsyncGameSK,
+  action: Action,
   sessionId: string,
-  action: Action
+  socketId: string
 ) {
-  const isGlobalUpdate = game.isNextActionEmitsGlobalUpdate()
-  if (game.updateState(action, sessionId)) {
-    if (isGlobalUpdate) {
-      game.emitUpdateToPlayers()
-    } else {
-      game.emitUpdateToPlayer(sessionId)
-    }
-  }
+  game.emitGameStateUpdate(action, sessionId, socketId)
 }

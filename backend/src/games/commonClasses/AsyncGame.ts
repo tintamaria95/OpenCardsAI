@@ -29,7 +29,6 @@ export class AsyncGame {
 
     // FRONT ONLY
     protected possiblePlayerUserIds: Set<string>
-    protected isResetFrontChrono: boolean
 
 
     constructor(players: Player[], deck: Deck){
@@ -37,6 +36,7 @@ export class AsyncGame {
         this.deck.shuffle()
 
         this.players =  players
+        this.players.map((player, index) => player.setSeat(index))
         this.nbPlayers = players.length
 
         this.id2Index =new Map<string, number>()
@@ -46,7 +46,6 @@ export class AsyncGame {
         this.isGameEnded =  false
 
         this.possiblePlayerUserIds = new Set(Array.from({ length: players.length }, (_, index) => players[index].getSessionId()))
-        this.isResetFrontChrono = true
     }
 
 
