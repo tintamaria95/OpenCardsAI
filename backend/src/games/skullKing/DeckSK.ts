@@ -26,11 +26,14 @@ export class DeckSK extends Deck {
       () => new CardSK('character', 'pirate')
     )
     // const smCard = new CardSK('character', 'pirate', undefined, 'scaryMary')
-    const smCard = Array.from(
-      { length: 200 },
+    const smCards = Array.from(
+      { length: 1 },
       () => new CardSK('character', 'pirate', undefined, 'scaryMary')
     )
-    const skCard = new CardSK('character', 'skullKing')
+    const skCards = Array.from(
+      { length: 1 },
+      () => new CardSK('character', 'skullKing')
+    )
     const mermaidCards = Array.from(
       { length: 2 },
       () => new CardSK('character', 'mermaid')
@@ -43,8 +46,8 @@ export class DeckSK extends Deck {
       ...coloredCards,
       ...blackCards,
       ...pirateCards,
-      ...smCard,
-      skCard,
+      ...smCards,
+      ...skCards,
       ...mermaidCards,
       ...escapeCards
     ]

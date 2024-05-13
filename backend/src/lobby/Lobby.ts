@@ -1,6 +1,7 @@
 import { User, UserFrontType } from "./User"
 import { AsyncGameSK } from "../games/skullKing/AsyncGameSK"
 import { lobbyLogger } from "../logger"
+import { randomUUID } from "crypto"
 
 export type LobbyFrontType = {
     id: string
@@ -18,12 +19,12 @@ export class Lobby {
     users: Map<User['sessionId'], User>
     game?: AsyncGameSK
 
-    constructor(id: string, name: string, isPublic: boolean, users: Map<User['sessionId'], User>) {
-        this.id = id
+    constructor(name: string, isPublic: boolean, users: Map<User['sessionId'], User>) {
         this.name = name
         this.isPublic = isPublic
         this.users = users
 
+        this.id = randomUUID()
         this.createdAt = Date.now()
     }
 
@@ -44,6 +45,14 @@ export class Lobby {
             users: usersFront,
             isGameStarted: this.game !== undefined
         }
+    }
+
+    isOngoingGame(){
+        return this.game !== undefined
+    }
+
+    getNonBotPlayers(){
+        return [...this.users.values()].filter(user => !user.isBot)
     }
 
     isEmpty() {
@@ -76,6 +85,7 @@ export class Lobby {
     addUserToLobby(socketId: string, user: User) {
         this.users.set(user.sessionId, user)
         user.socketId2LobbyId.set(socketId, this.id)
+        user.lobbyId2SocketId.set(this.id, socketId)
     }
 
     removeUserfromLobby(user: User) {
@@ -84,6 +94,11 @@ export class Lobby {
             return
         } else {
             this.users.delete(user.sessionId)
+            const socketId = user.lobbyId2SocketId.get(this.id)
+            if (socketId !== undefined) {
+                user.socketId2LobbyId.delete(socketId)
+            }
+            user.lobbyId2SocketId.delete(this.id)
             lobbyLogger.removedUserFromLobby(user.sessionId, this.id)
         }
     }
@@ -99,6 +114,11 @@ export class Lobby {
                 isBot: true
             }
             this.users.set(user.sessionId, bot)
+            const socketId = user.lobbyId2SocketId.get(this.id)
+            if (socketId !== undefined) {
+                user.socketId2LobbyId.delete(socketId)
+            }
+            user.lobbyId2SocketId.delete(this.id)
             lobbyLogger.replacedUserByBot(user.sessionId, this.id)
         }
     }

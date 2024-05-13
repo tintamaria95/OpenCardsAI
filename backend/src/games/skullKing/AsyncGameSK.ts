@@ -5,9 +5,10 @@ import { PileSK } from './PileSK'
 import { gameLogger } from '../../logger'
 import { AsyncGame, AsyncGameInterface } from '../commonClasses/AsyncGame'
 import { CardSK, SkColors } from './CardSK'
-import { ActionSetContract, ActionPlayCard } from './ActionSK'
+import { ActionSetContract, ActionPlayCard, ActionSK } from './ActionSK'
 import { Action } from '../commonClasses/Action'
 import { Server } from 'socket.io'
+import { GameConfig } from './config'
 
 
 type PlayerFrontState = {
@@ -19,7 +20,7 @@ type PlayerFrontState = {
     contracts: number[]
     nbTricks: number[]
     scores: number[]
-    isResetChrono: boolean
+    chronoValue?: number
     // Private information
     playerHand: string[]
 }
@@ -40,14 +41,18 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     private pile: PileSK
 
     private timer?: NodeJS.Timeout
+    private minTimerDuration = 10
+    private maxTimerduration = 90
+    private timerDuration = 20
+    private chronoValue = this.timerDuration
     private io?: Server
 
-    constructor(players: PlayerSK[], deck: DeckSK, timerDuration?: number, io?: Server) {
+    constructor(players: PlayerSK[], deck: DeckSK, config: GameConfig, io?: Server) {
         super(players, deck)
         this.players = players
         
         this.nbRounds = Math.min(
-            10,
+            config.nbRounds,
             Math.floor(deck.getDeckSize() / players.length)
         )
         this.roundFirstPlayerIndex = randomInt(this.nbPlayers)
@@ -63,14 +68,14 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         gameLogger.debug('- GAME STARTS -')
         gameLogger.debug(`Round first player: ${players[this.roundFirstPlayerIndex].getSessionId()}`)
         this.distributeCardsToPlayers()
-        this.setTimer(timerDuration)
+        this.setTimer(config.timerDuration)
         if( io !== undefined){
             this.io = io
         }
         
     }
 
-    public getPlayerState(playerId: string): PlayerFrontState {
+    public getPlayerState(playerId: string, isGetChrono: boolean): PlayerFrontState {
         let contracts: number[] = []
         if (this.possibleActions.has('playCard')){
             contracts = this.getContracts()
@@ -85,7 +90,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
             contracts: contracts,
             nbTricks: this.getNbTricks(),
             scores: this.getScores(),
-            isResetChrono: this.isResetFrontChrono,
+            chronoValue: this.chronoValue,
             // Private information
             playerHand: this.getPlayerCardIds(playerId)
 
@@ -340,6 +345,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     private endGame(){
         this.clearTimer()
         gameLogger.debug('- GAME ENDED -')
+        this.emitEndGame()
     }
 
     private distributeCardsToPlayers() {
@@ -397,28 +403,30 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         return playableCardIds.includes(cardId)
     }
 
-    private setTimer(timerDuration?: number) {
-        if (timerDuration !== undefined && timerDuration > 0) {
-            gameLogger.info(`Set Timer of ${timerDuration} sec per player`)
-            this.timer = setTimeout(() => {
+    private setTimer(timerDuration: number) {
+        if (timerDuration >= this.minTimerDuration && timerDuration <= this.maxTimerduration) {
+            this.timerDuration = Math.ceil(timerDuration)
+            this.chronoValue = this.timerDuration
+        }
+        gameLogger.info(`Set Timer: ${this.timerDuration} sec per player`)
+        this.timer = setInterval(() => {
+            this.chronoValue = Math.max(0, this.chronoValue - 1)
+            if (this.chronoValue === 0) {
                 gameLogger.debug(`Time's up!`)
                 if (this.possibleActions.has('setContract')) {
                     while (this.possibleActions.has('setContract')) {
                         this.updateStateRandomly()
                     }
-                    this.refreshTimerForNextPlayer()
                 } else {
                     this.updateStateRandomly()
                 }
                 this.emitUpdateToPlayers()
-            }, timerDuration * 1000)
-        }
+            }
+        }, 1000)
     }
 
     private refreshTimerForNextPlayer(){
-        if (this.timer !== undefined){
-            this.timer.refresh()
-        }
+        this.chronoValue = Math.ceil(this.timerDuration)
     }
 
     public clearTimer(){
@@ -436,19 +444,38 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         }
     }
 
-    public emitUpdateToPlayer(playerId: string){
-        const io = this.io
-        if (io !== undefined){
-            this.isResetFrontChrono = false
-            io.to(playerId).emit('gameState', this.getPlayerState(playerId))
+    public emitGameStateUpdate(action: ActionSK, sessionId: string, socketId: string) {
+        const isGlobalUpdate = this.isNextActionEmitsGlobalUpdate()
+        if (this.updateState(action, sessionId)) {
+            if (isGlobalUpdate) {
+                this.emitUpdateToPlayers()
+            } else {
+                this.emitUpdateToPlayer(sessionId, socketId)
+            }
         }
     }
 
-    public emitUpdateToPlayers() {
+    private emitUpdateToPlayer(sessionId: string, socketId: string) {
         const io = this.io
         if (io !== undefined) {
-            this.isResetFrontChrono = true
-            this.players.forEach(player => io.to(player.getSessionId()).emit('gameState', this.getPlayerState(player.getSessionId())))
+            io.to(socketId).emit('gameState', this.getPlayerState(sessionId, false))
+        }
+    }
+
+    private emitUpdateToPlayers() {
+        const io = this.io
+        if (io !== undefined) {
+            this.players.forEach(player => {
+                const socketId = player.getSocketId()
+                if (socketId !== undefined){
+                    io.to(socketId).emit('gameState', this.getPlayerState(player.getSessionId(), true))}})
+        }
+    }
+
+    private emitEndGame(){
+        const io = this.io
+        if (io !== undefined) {
+            this.players.forEach(player => io.to(player.getSessionId()).emit('endGame', this.getPlayerState(player.getSessionId(), true)))
         }
     }
 

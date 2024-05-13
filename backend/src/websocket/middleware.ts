@@ -28,21 +28,13 @@ export function checkSessionId(
   if (isVerbose) {
     lobbyLogger.denySessionIdInSessionStore()
   }
-  const newSessionId = randomUUID()
-  const newUserId = randomUUID()
   const username = 'User' + Math.floor(Math.random() * 1000).toString()
-
-  socket.handshake.auth.sessionId = newSessionId
-  sessionStore.saveSession(
-    newSessionId,
-    new User(newSessionId,
-      newUserId,
-      username,
-      '_',
-      false)
-  )
+  const user = new User(username, '_', false)
+  socket.handshake.auth.sessionId = user.sessionId
+  sessionStore.saveSession(user.sessionId, user)
+  
   if (isVerbose) {
-    lobbyLogger.createdNewSession(newSessionId, newUserId, username)
+    lobbyLogger.createdNewSession(user.sessionId, user.userId, username)
   }
   next()
 }

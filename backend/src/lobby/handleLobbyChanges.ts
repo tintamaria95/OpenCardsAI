@@ -5,6 +5,7 @@ import { Server } from 'socket.io'
 import { InMemoryLobbiesStore } from './lobbyStore'
 import { emitResJoinLobby } from '../websocket/emit'
 import { ROOMPUBLICLOBBY } from '../websocket/emit'
+import { lobbyLogger } from '../logger'
 
 export function handleRemoveUserFromLobby(
   io: Server,
@@ -14,15 +15,9 @@ export function handleRemoveUserFromLobby(
 ) {
   lobby.removeUserfromLobby(user)
   if (lobby.isEmpty()) {
-    lobbyStore.deleteLobby(lobby['id'])
+    lobbyStore.deleteLobby(io, lobby['id'], lobby.isPublic)
   } else {
     io.to(lobby['id']).emit('update-lobby', lobby.getFront())
-  }
-  if (lobby.isPublic) {
-    io.to(ROOMPUBLICLOBBY).emit(
-      'update-lobbylist-setall',
-      lobbyStore.getAllLobbiesForFront()
-    )
   }
 
 }
@@ -34,20 +29,12 @@ export function handleUserReplacedByBot(
   user: User
 ) {
   lobby.replaceUserByBot(user)
-  if (lobby.isEmpty()) {
-    lobby.game?.clearTimer()
-    lobbyStore.deleteLobby(lobby['id'])
-  } else {
-    io.to(lobby['id']).emit('update-lobby', lobby.getFront())
+  io.to(lobby['id']).emit('update-lobby', lobby.getFront())
+  if (lobby.isPublic) {
+    io.to(ROOMPUBLICLOBBY).emit('update-lobbylist-updatelobby', lobby.getFront())
   }
 
-  if (lobby.isPublic) {
-    io.to(ROOMPUBLICLOBBY).emit(
-      'update-lobbylist-setall',
-      lobbyStore.getAllLobbiesForFront()
-    )
-  }
-  
+
 }
 
 export async function handleUserLeftLobby(
@@ -55,21 +42,30 @@ export async function handleUserLeftLobby(
   socket: Socket,
   lobbyId: string,
   lobbyStore: InMemoryLobbiesStore,
-  session: User
+  user: User
 ) {
-
-      const lobby = lobbyStore.getLobby(lobbyId)
-      if (lobby !== undefined) {
-        await socket.leave(lobbyId)
-        const isGameStarted = lobby.game !== undefined
-        if (isGameStarted) {
-          handleUserReplacedByBot(io, lobbyStore, lobby, session)
-        }
-        else {
-          handleRemoveUserFromLobby(io, lobbyStore, lobby, session)
-        }
+  const lobby = lobbyStore.getLobby(lobbyId)
+  if (lobby === undefined) {
+    lobbyLogger.undefinedLobby(lobbyId)
+    return
   }
-  session.socketId2LobbyId.set(socket.id, undefined)
+  await socket.leave(lobbyId)
+  const isGameStarted = lobby.game !== undefined
+  if (isGameStarted) {
+    const nonBotPlayers = lobby.getNonBotPlayers()
+    if (nonBotPlayers.length === 1) {
+      if (nonBotPlayers[0].sessionId === user.sessionId) {
+        lobby.game?.clearTimer()
+        lobbyStore.deleteLobby(io, lobby['id'], lobby.isPublic)
+      }
+    } else {
+      handleUserReplacedByBot(io, lobbyStore, lobby, user)
+    }
+  }
+  else {
+    handleRemoveUserFromLobby(io, lobbyStore, lobby, user)
+  }
+  io.to(socket.id).emit('update-lobby')
 }
 
 
