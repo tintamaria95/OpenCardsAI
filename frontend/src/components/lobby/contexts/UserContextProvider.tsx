@@ -12,11 +12,11 @@ function initFromStorage(key: string) {
 }
 
 export function UserContextProvider({ children }: { children: ReactElement }) {
-  const [sessionId, setSessionId] = useState<string | undefined>('sessionId')
-  const [userId, setUserId] = useState('userId')
+  const [sessionId, setSessionId] = useState<string | undefined>(initFromStorage('sessionId'))
+  const [userId, setUserId] = useState(initFromStorage('userId'))
   const [username, setUsername] = useState(initFromStorage('username'))
-  const [imageName, setImageName] = useState('imageName')
-  const [lobbyId, setLobbyId] = useState<string | undefined>('lobbyId')
+  const [imageName, setImageName] = useState(initFromStorage('imageName'))
+  const [lobbyId, setLobbyId] = useState<string | undefined>(initFromStorage('lobbyId'))
 
   const { socket } = useSocketContext()
 
@@ -24,6 +24,7 @@ export function UserContextProvider({ children }: { children: ReactElement }) {
     function setUserFromSession(user: UserFrontType) {
       if (user.sessionId) {
         localStorage.setItem('sessionId', user.sessionId)
+        localStorage.setItem('username', user.username)
       } else {
         console.log('Error: user.sessionId is undefined')
       }

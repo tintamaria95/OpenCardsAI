@@ -5,8 +5,9 @@ import { useSocketContext } from '../../global/contexts/SocketContext'
 
 export function GameContextProvider({ children }: { children: ReactElement }) {
 
-    const [count, setCount] = useState(10)
+    const [count, setCount] = useState(20)
     const [state, setState] = useState<PlayerFrontState>({
+        isGameEnded: false,
         roundIndex: 1,
         roundFirstPlayerIndex: 0,
         possiblePlayers: [],
@@ -15,16 +16,16 @@ export function GameContextProvider({ children }: { children: ReactElement }) {
         nbTricks: [],
         pileCards: [],
         scores: [],
-        playerHand: [],
-        isResetChrono: true
+        playerHand: []
     })
 
     const { socket } = useSocketContext()
 
     useEffect(() => {
         function updateGameState(state: PlayerFrontState) {
-            if (state.isResetChrono) {
-                setCount(10)
+            const chronoValue = state.chronoValue
+            if (chronoValue !== undefined) {
+                setCount(chronoValue)
             }
             setState(state)
         }

@@ -1,4 +1,4 @@
-import { ActionSK } from "./action/ActionSK"
+import { Action } from "./action/Action"
 
 export type UserFrontType = {
   sessionId?: string // private
@@ -16,21 +16,22 @@ export type LobbyFrontType = {
   isGameStarted: boolean
 }
 
+
 export type PlayerFrontState = {
-  roundIndex: number,
+  isGameEnded: boolean,
+  roundIndex: number
   roundFirstPlayerIndex: number
-  possibleActions: ActionSK['type'][],
-  possiblePlayers: string[],
-  pileCards: string[],
-  contracts: number[],
-  nbTricks: number[],
-  scores: number[],
-  isResetChrono: boolean,
+  possibleActions: Action['type'][]
+  possiblePlayers: string[]
+  pileCards: string[]
+  contracts: number[]
+  nbTricks: number[]
+  scores: number[]
+  chronoValue?: number
   // Private information
   playerHand: string[]
 }
 
-///
 
 export type ResJoinLobbySuccessArgs = {
   status: 'success',

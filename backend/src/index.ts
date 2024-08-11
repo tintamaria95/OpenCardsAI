@@ -26,7 +26,7 @@ import { Action } from './games/commonClasses/Action'
 import { PlayerSK } from './games/skullKing/PlayerSK'
 import { DeckSK } from './games/skullKing/DeckSK'
 import { getFrontErrorMessage } from './utils'
-import { gameConfig } from './games/skullKing/config'
+import { defaultGameConfig } from './games/skullKing/config'
 
 const PORT = 3000
 
@@ -134,7 +134,7 @@ io.on('connection', async (socket) => {
     if (lobby === undefined) { return }
     const game = getSessionGame(lobby)
     if (game === undefined) { return }
-    io.to(socket.id).emit('gameState', game.getPlayerState(session.sessionId, true))
+    io.to(socket.id).emit('gameState', game.getPlayerState(session.sessionId))
   })
 
   socket.on('req-update-gameState', (action: Action) => {
@@ -143,6 +143,17 @@ io.on('connection', async (socket) => {
     const game = getSessionGame(lobby)
     if (game === undefined) { return }
     reqUpdateGameState(game, action, sessionId, socket.id)
+    if (game.getIsGameEnded()){
+      lobby.game = undefined
+      lobby.users.forEach(user =>{
+        const socketId = user.lobbyId2SocketId.get(lobby.id)
+        user.lobbyId2SocketId.delete(lobby.id)
+        if (socketId !== undefined){
+          user.socketId2LobbyId.delete(socketId)
+        }
+      })
+      lobbyStore.deleteLobby(io, lobby.id, lobby.isPublic)
+    }
   })
 
   socket.on('req-start-game', () => {
@@ -157,7 +168,7 @@ io.on('connection', async (socket) => {
     const players: PlayerSK[] = [...lobby.users.values()].map(user => new PlayerSK(user.sessionId, user.userId, user.username, user.lobbyId2SocketId.get(lobby.id)))
     if (players.length >= AsyncGameSK.minPlayers && players.length <= AsyncGameSK.maxPlayers) {
       const deck = new DeckSK()
-      const game = new AsyncGameSK(players, deck, gameConfig, io)
+      const game = new AsyncGameSK(players, deck, defaultGameConfig, io)
       lobby.game = game
       emitResStartGame(io, lobby.id, {status: 'success'})
       if (lobby.isPublic) {

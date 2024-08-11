@@ -4,7 +4,7 @@ import { useSocketContext } from '../global/contexts/SocketContext'
 export default function LobbyToJoin({ id, name, users, isGameStarted }: LobbyFrontType) {
   const { socket } = useSocketContext()
 
-  function handleReqNavigateToLobby() {
+  function handleClickJoinLobby() {
     socket.emit('req-join-lobby', id)
   }
 
@@ -17,7 +17,7 @@ export default function LobbyToJoin({ id, name, users, isGameStarted }: LobbyFro
       ) : (
         <div>status : Ongoing game</div>
       )}
-      <button onClick={handleReqNavigateToLobby}>Rejoindre</button>
+      <button onClick={handleClickJoinLobby}>Rejoindre</button>
     </>
   )
 }

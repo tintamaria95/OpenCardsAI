@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Username } from '../components/lobby/Username'
+import PlayButton from '../components/lobby/PlayButton'
 
 function Home() {
   return (
@@ -11,6 +12,7 @@ function Home() {
       <div id="avatar">Image avatar</div>
       <h3>Personnaliser l&apos;avatar</h3>
       <Username />
+      <PlayButton/>
       <div>
         <Link to={'publiclobby'}>Lobbys publics</Link>
       </div>

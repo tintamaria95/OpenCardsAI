@@ -3,9 +3,11 @@ type GameConfig = {
     nbRounds: number
 }
 
-const gameConfig: GameConfig = {
-    nbRounds: 3,
+const defaultGameConfig: GameConfig = {
+    nbRounds: 10,
     timerDuration: 20
+    // with/without whale/gold/kraken cards
+    // with/without pirate special skills
 }
 
-export { GameConfig, gameConfig }
+export { GameConfig, defaultGameConfig }

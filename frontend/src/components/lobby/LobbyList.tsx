@@ -18,12 +18,20 @@ export default function LobbyList() {
     }
 
     function eventUpdateLobby(updatedLobby: LobbyFrontType) {
-      setLobbyList(prev =>
-        prev.map(lobby => {
+      setLobbyList((prev) => {
+        if (prev.findIndex(lobby => lobby.id === updatedLobby.id) === -1) {
+          return [...prev, updatedLobby]
+        }
+        return prev.map(lobby => {
           if (lobby.id === updatedLobby.id) {
             return updatedLobby
           } return lobby
-        }))
+        })
+      })
+    }
+
+    function eventRemoveLobby(lobbyId: string){
+      setLobbyList(prev => prev.filter(lobby => lobby.id !== lobbyId))
     }
 
     
@@ -31,12 +39,15 @@ export default function LobbyList() {
     socket.on('update-lobbylist-setall', eventSetLobbyList)
     socket.on('update-lobbylist-addlobby', eventCreateLobby)
     socket.on('update-lobbylist-updatelobby', eventUpdateLobby)
+    socket.on('update-lobbylist-removelobby', eventRemoveLobby)
 
     socket.emit('req-lobbylist')
 
     return () => {
       socket.off('update-lobbylist-setall', eventSetLobbyList)
       socket.off('update-lobbylist-addlobby', eventCreateLobby)
+      socket.off('update-lobbylist-updatelobby', eventUpdateLobby)
+      socket.off('update-lobbylist-removelobby', eventRemoveLobby)
     }
   }, [socket])
 

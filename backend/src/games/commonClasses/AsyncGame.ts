@@ -48,10 +48,10 @@ export class AsyncGame {
         this.possiblePlayerUserIds = new Set(Array.from({ length: players.length }, (_, index) => players[index].getSessionId()))
     }
 
-
-    public isEnded(){
+    public getIsGameEnded(){
         return this.isGameEnded
     }
+
 
     /**
      * Security function which returns true if a player tries to play the wrong action or at the wrong moment.

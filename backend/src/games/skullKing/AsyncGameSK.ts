@@ -12,6 +12,7 @@ import { GameConfig } from './config'
 
 
 type PlayerFrontState = {
+    isGameEnded: boolean,
     roundIndex: number
     roundFirstPlayerIndex: number
     possibleActions: Action['type'][]
@@ -75,13 +76,14 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         
     }
 
-    public getPlayerState(playerId: string, isGetChrono: boolean): PlayerFrontState {
+    public getPlayerState(playerId: string): PlayerFrontState {
         let contracts: number[] = []
         if (this.possibleActions.has('playCard')){
             contracts = this.getContracts()
         }
         return {
             // Public informations
+            isGameEnded: this.isGameEnded,
             roundIndex: this.getRoundIndex(),
             roundFirstPlayerIndex: this.getRoundFirstPlayerIndex(),
             possibleActions: this.getPossibleActions(),
@@ -93,7 +95,6 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
             chronoValue: this.chronoValue,
             // Private information
             playerHand: this.getPlayerCardIds(playerId)
-
         }
     }
 
@@ -105,7 +106,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
         return this.roundFirstPlayerIndex
     }
 
-    getPileCards() {
+    public getPileCards() {
         return this.pile.getCardsIds()
     }
 
@@ -345,7 +346,6 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     private endGame(){
         this.clearTimer()
         gameLogger.debug('- GAME ENDED -')
-        this.emitEndGame()
     }
 
     private distributeCardsToPlayers() {
@@ -458,7 +458,7 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
     private emitUpdateToPlayer(sessionId: string, socketId: string) {
         const io = this.io
         if (io !== undefined) {
-            io.to(socketId).emit('gameState', this.getPlayerState(sessionId, false))
+            io.to(socketId).emit('gameState', this.getPlayerState(sessionId))
         }
     }
 
@@ -468,16 +468,10 @@ export class AsyncGameSK extends AsyncGame implements AsyncGameInterface{
             this.players.forEach(player => {
                 const socketId = player.getSocketId()
                 if (socketId !== undefined){
-                    io.to(socketId).emit('gameState', this.getPlayerState(player.getSessionId(), true))}})
+                    io.to(socketId).emit('gameState', this.getPlayerState(player.getSessionId()))}})
         }
     }
 
-    private emitEndGame(){
-        const io = this.io
-        if (io !== undefined) {
-            this.players.forEach(player => io.to(player.getSessionId()).emit('endGame', this.getPlayerState(player.getSessionId(), true)))
-        }
-    }
 
     public isNextActionEmitsGlobalUpdate() {
         return (

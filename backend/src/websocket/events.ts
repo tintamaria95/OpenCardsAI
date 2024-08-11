@@ -29,6 +29,7 @@ export async function joinMenu(
   if (lobbyId !== undefined) {
     await handleUserLeftLobby(io, socket, lobbyId, lobbyStore, session)
   }
+  io.to(socket.id).emit('update-lobby')
 }
 
 export function reqLobbyList(

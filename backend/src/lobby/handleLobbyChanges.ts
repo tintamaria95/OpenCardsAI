@@ -61,11 +61,9 @@ export async function handleUserLeftLobby(
     } else {
       handleUserReplacedByBot(io, lobbyStore, lobby, user)
     }
-  }
-  else {
+  } else {
     handleRemoveUserFromLobby(io, lobbyStore, lobby, user)
   }
-  io.to(socket.id).emit('update-lobby')
 }
 
 

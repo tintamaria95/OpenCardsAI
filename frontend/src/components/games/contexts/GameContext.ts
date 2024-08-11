@@ -9,9 +9,10 @@ type GameContent = {
 }
 
 export const GameContext = createContext<GameContent>({
-    count: 10,
+    count: 20,
     setCount: () => {},
     state:  {
+        isGameEnded: false,
         roundIndex: 1,
         roundFirstPlayerIndex:0,
         possiblePlayers: [],
@@ -20,8 +21,7 @@ export const GameContext = createContext<GameContent>({
         nbTricks: [],
         pileCards: [],
         scores: [],
-        playerHand: [],
-        isResetChrono: true
+        playerHand: []
     }
 })
 
